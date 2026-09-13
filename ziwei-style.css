@@ -1,0 +1,198 @@
+/* ============================================================
+ * 紫微斗数排盘 — 样式（上中下结构 + 竖排，复刻 Figma 101:273）
+ * ============================================================ */
+
+@font-face {
+  font-family: 'FZShengShiKaiShuS-EB-GB';
+  src: url('FZShengSKSJW_Da.TTF') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+:root { --bg: #f2efe8; --border: #d4d4d4; }
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  font-family: 'FZShengShiKaiShuS-EB-GB', '方正盛世楷书', 'STKaiti', 'KaiTi', '楷体', serif;
+  -webkit-font-smoothing: antialiased;
+  color: #1a1a1a;
+}
+
+.page {
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ---------- 输入区 ---------- */
+.input-panel {
+  background: #fff; border-radius: 10px; padding: 16px 20px; margin-bottom: 20px;
+  display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+}
+.input-panel label { display: flex; flex-direction: column; gap: 5px; font-size: 13px; color: #888; }
+.input-panel input, .input-panel select {
+  font-size: 16px; padding: 7px 9px; border: 1px solid #ddd; border-radius: 6px; min-width: 70px; font-family: inherit;
+}
+.input-panel button {
+  font-size: 16px; padding: 8px 20px; border: none; border-radius: 6px; background: #0b0060; color: #fff; cursor: pointer; font-family: inherit;
+}
+.input-panel button:hover { background: #1a1490; }
+
+/* ---------- 12 宫方阵（等比缩放容器，动态一屏看完） ---------- */
+.board-wrap {
+  overflow: hidden;
+  margin: 0 auto;
+}
+.palace-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 300px);
+  grid-template-rows: repeat(4, 400px);
+  width: 1200px;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 66px;
+  overflow: hidden;
+  transform-origin: top left;
+}
+
+/* 宫格：上中下结构 */
+.palace {
+  width: 300px;
+  background: #fff;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.15s;
+}
+.palace:hover { background: #faf7ef; }
+
+/* ===== 顶部：宫位信息 ===== */
+.palace-top {
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+  min-height: 120px;
+}
+/* 十二长生 + 天干 + 地支（竖排） */
+.gz { display: flex; flex-direction: column; align-items: center; line-height: 1; gap: 0; width: 56px; }
+.gz .cs { font-size: 24px; color: #000; line-height: 1; }
+.gz .gan, .gz .zhi { font-size: 48px; line-height: 1; }
+/* 宫名组：维度标签 + 宫名（竖排） */
+.gong { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 56px; }
+.gong .dim-tag { font-size: 24px; line-height: 1; color: #1a1a1a; }
+.gong .gong-name { font-size: 48px; line-height: 1; color: #1a1a1a; text-align: center; }
+
+/* ===== 中间：禄权科忌（紧贴星曜上方，从底部向上延伸） ===== */
+.palace-mid {
+  position: relative;
+  min-height: 0;
+  margin-top: auto;
+  margin-bottom: 0;
+  margin-left: 0;
+  margin-right: 0;
+}
+/* 四化胶囊组：竖排，居中对齐，56px 宽 */
+.mutagen-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 56px;
+}
+.mutagen-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 100px;
+  font-size: 24px;
+  line-height: 24px;
+  color: #fff;
+  min-width: 56px;
+}
+.mutagen-pill.lu { background: #4ed5a6; }
+.mutagen-pill.quan { background: #ff810c; }
+.mutagen-pill.ke { background: #b9ac6d; }
+.mutagen-pill.ji { background: #605c7f; }
+.mutagen-pill:hover { transform: scale(1.15); filter: brightness(1.15); }
+
+/* 对宫化 / 自化（用户提供的完整组件切图） */
+.mutagen-img { display: block; }
+.duigong-img { width: 56px; height: 32px; }   /* 对宫化组件 */
+.zihua-img { width: 33px; height: 34px; }     /* 自化组件 */
+
+/* ===== 底部：星曜 ===== */
+.palace-bottom {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  flex-wrap: nowrap;
+  margin-top: 0;
+  overflow: hidden;
+}
+/* 主星：亮度 + 星名（竖排） */
+.star-major {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 0 2px;
+}
+.star-major .brightness { font-size: 24px; line-height: 1; }
+.star-major .star-name { font-size: 48px; line-height: 1; text-align: center; }
+/* 辅星（40px 竖排，比主星小一号） */
+.star-minor .star-name { font-size: 40px; line-height: 1; text-align: center; }
+/* 杂星（32px 竖排，opacity 40%） */
+.star-adj { font-size: 32px; line-height: 1; opacity: 0.4; color: #000; text-align: center; }
+
+/* ===== 点选宫位高亮 ===== */
+.palace.selected { background: #fff3d6; box-shadow: inset 0 0 0 2px #d4a017; }
+.palace.opposite { background: #ffe9e9; box-shadow: inset 0 0 0 2px #c0392b; }
+.palace.trine { background: #eaf6ea; box-shadow: inset 0 0 0 2px #27ae60; }
+
+/* ===== 中间命盘信息格 ===== */
+.palace-center {
+  grid-area: 2 / 2 / 4 / 4;
+  background: #fbf8f0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 20px;
+}
+.palace-center .ci-title { font-size: 20px; color: #888; }
+.palace-center .ci-value { font-size: 32px; font-weight: 600; color: #1a1a1a; }
+/* 中心维度切换按钮 */
+.center-dims {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+.cdim {
+  font-size: 14px;
+  padding: 5px 14px;
+  border: 1px solid #ccc;
+  border-radius: 100px;
+  background: #fff;
+  color: #555;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cdim.active {
+  background: #0b0060;
+  color: #fff;
+  border-color: #0b0060;
+}
+
+/* ===== 底部维度切换 ===== */
+.dim-tabs { display: flex; gap: 6px; justify-content: center; margin-top: 16px; }
+.dim-tab {
+  font-size: 15px; padding: 8px 18px; border: 1px solid #ccc; border-radius: 100px; background: #fff; color: #555; cursor: pointer; font-family: inherit;
+}
+.dim-tab.active { background: #0b0060; color: #fff; border-color: #0b0060; }
