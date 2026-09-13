@@ -105,7 +105,7 @@ function ziweiPaipan() {
   var m = parseInt(document.getElementById('in-month').value, 10);
   var d = parseInt(document.getElementById('in-day').value, 10);
   var hour = parseInt(document.getElementById('in-hour').value, 10) || 0;
-  var gender = document.getElementById('in-gender').value;
+  var gender = (parseInt(document.getElementById('in-gender').value, 10) === 1) ? '男' : '女';
   if (!y || !m || !d) { alert('请填写完整的出生日期'); return; }
   var timeIndex = hourToTimeIndex(hour);
   try {
