@@ -1207,6 +1207,7 @@ function applyChart(chart) {
   document.getElementById('in-gender').value = chart.gender;
   document.getElementById('in-city').value = chart.city;
   baziPaipan();
+  if (typeof ziweiPaipan === 'function') ziweiPaipan();  // 紫微跟着排
   renderQuizQuestions(chart);
   // 登录状态下，异步从云端拉取该命例批注并合并回填
   if (chart.isQuiz) {
@@ -1279,6 +1280,7 @@ function jumpToYear(year) {
   closeYunDropdown();
   renderCurYun();
   requestAnimationFrame(function () { requestAnimationFrame(renderAllYunRelations); });
+  if (typeof ziweiJumpToYear === 'function') ziweiJumpToYear(year);  // 紫微同步切流年
 }
 
 function renderQuizQuestions(chart) {

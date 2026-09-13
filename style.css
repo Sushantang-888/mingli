@@ -682,3 +682,47 @@ body {
 .palace-grid {
   font-family: 'FZShengShiKaiShuS-EB-GB', '方正盛世楷书', 'STKaiti', 'KaiTi', '楷体', serif;
 }
+
+/* ===== 紫微维度切换按钮（放大） ===== */
+.cdim {
+  font-size: 18px !important;
+  padding: 8px 18px !important;
+  min-width: 88px;
+}
+.dim-arrow {
+  display: inline-block;
+  margin-left: 4px;
+  font-size: 12px;
+  opacity: 0.6;
+  cursor: pointer;
+}
+.dim-arrow:hover { opacity: 1; }
+
+/* ===== 紫微运限浮层 ===== */
+.ziwei-yun-dropdown {
+  position: fixed;
+  z-index: 200;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 60vh;
+  overflow-y: auto;
+  transform: translateX(-50%);
+}
+.ziwei-yun-item {
+  font-size: 16px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: center;
+  white-space: nowrap;
+}
+.ziwei-yun-item:hover { background: #f0ede4; }

@@ -144,9 +144,9 @@ function renderPalaces() {
     '<div class="ci-value">身主 ' + a.body + '</div>' +
     '<div class="center-dims">' +
       '<button class="cdim' + (CURRENT_DIM === 'origin' ? ' active' : '') + '" data-dim="origin" onclick="switchDim(\'origin\')">命局</button>' +
-      '<button class="cdim' + (CURRENT_DIM === 'decadal' ? ' active' : '') + '" data-dim="decadal" onclick="switchDim(\'decadal\')">大运</button>' +
-      '<button class="cdim' + (CURRENT_DIM === 'yearly' ? ' active' : '') + '" data-dim="yearly" onclick="switchDim(\'yearly\')">流年</button>' +
-      '<button class="cdim' + (CURRENT_DIM === 'monthly' ? ' active' : '') + '" data-dim="monthly" onclick="switchDim(\'monthly\')">流月</button>' +
+      '<button class="cdim' + (CURRENT_DIM === 'decadal' ? ' active' : '') + '" data-dim="decadal" onclick="switchDim(\'decadal\')">大运 <span class="dim-arrow" onclick="event.stopPropagation(); ziweiYunDropdown(\'decadal\')">▾</span></button>' +
+      '<button class="cdim' + (CURRENT_DIM === 'yearly' ? ' active' : '') + '" data-dim="yearly" onclick="switchDim(\'yearly\')">流年 <span class="dim-arrow" onclick="event.stopPropagation(); ziweiYunDropdown(\'yearly\')">▾</span></button>' +
+      '<button class="cdim' + (CURRENT_DIM === 'monthly' ? ' active' : '') + '" data-dim="monthly" onclick="switchDim(\'monthly\')">流月 <span class="dim-arrow" onclick="event.stopPropagation(); ziweiYunDropdown(\'monthly\')">▾</span></button>' +
     '</div>';
   grid.appendChild(center);
 
@@ -446,6 +446,88 @@ function selectPalace(branch) {
     else if (b === opp) cell.classList.add('opposite');
     else if (trine.indexOf(b) >= 0) cell.classList.add('trine');
   });
+}
+
+/* 年份跳转：切到指定年份的流年（题目点击年份标注调用） */
+function ziweiJumpToYear(year) {
+  if (!ASTROLABE) return;
+  try {
+    HOROSCOPE = ASTROLABE.horoscope(year + '-6-1', 0);
+    CURRENT_DIM = 'yearly';
+    renderPalaces();
+  } catch (e) { /* 静默 */ }
+}
+
+/* 切到指定日期的运限（大限/流年/流月浮层点击用） */
+function ziweiJumpToDate(dateStr) {
+  if (!ASTROLABE) return;
+  try {
+    HOROSCOPE = ASTROLABE.horoscope(dateStr, 0);
+    renderPalaces();
+  } catch (e) { /* 静默 */ }
+}
+
+/* 当前流年的公历年份 */
+function ziweiCurrentYear() {
+  if (!ASTROLABE) return null;
+  var dl = ASTROLABE.decadalList();
+  var decIdx = (HOROSCOPE && HOROSCOPE.decadal) ? HOROSCOPE.decadal.index : 0;
+  var yl = ASTROLABE.yearlyList(decIdx);
+  var yearIdx = (HOROSCOPE && HOROSCOPE.yearly) ? HOROSCOPE.yearly.index : 0;
+  return (yl[yearIdx] && yl[yearIdx].year) ? yl[yearIdx].year : null;
+}
+
+/* 浮层：大运/流年/流月列表 */
+function ziweiYunDropdown(key) {
+  closeZiweiDropdown();
+  if (!ASTROLABE) return;
+
+  var items = [];
+  if (key === 'decadal') {
+    ASTROLABE.decadalList().forEach(function (d) {
+      items.push({ label: d.heavenlyStem + d.earthlyBranch + ' ' + d.yearRange[0] + '~' + d.yearRange[1], date: d.yearRange[0] + '-6-1' });
+    });
+  } else if (key === 'yearly') {
+    var decIdx = (HOROSCOPE && HOROSCOPE.decadal) ? HOROSCOPE.decadal.index : 0;
+    ASTROLABE.yearlyList(decIdx).forEach(function (y) {
+      items.push({ label: y.heavenlyStem + y.earthlyBranch + ' ' + y.year, date: y.year + '-6-1' });
+    });
+  } else if (key === 'monthly') {
+    var curYear = ziweiCurrentYear();
+    if (curYear) {
+      ASTROLABE.monthlyList(curYear, 1).forEach(function (m) {
+        items.push({ label: m.heavenlyStem + m.earthlyBranch + ' ' + m.month + '月', date: curYear + '-' + m.month + '-15' });
+      });
+    }
+  }
+
+  var dd = document.createElement('div');
+  dd.className = 'ziwei-yun-dropdown';
+  items.forEach(function (it) {
+    var b = document.createElement('button');
+    b.className = 'ziwei-yun-item';
+    b.textContent = it.label;
+    b.onclick = function () {
+      ziweiJumpToDate(it.date);
+      closeZiweiDropdown();
+    };
+    dd.appendChild(b);
+  });
+  document.body.appendChild(dd);
+
+  var target = null;
+  if (typeof event !== 'undefined' && event && event.target) target = event.target;
+  else if (typeof window.event !== 'undefined' && window.event) target = window.event.target;
+  var btn = (target && target.closest) ? target.closest('.cdim') : null;
+  if (btn) {
+    var r = btn.getBoundingClientRect();
+    dd.style.left = (r.left + r.width / 2) + 'px';
+    dd.style.top = (r.bottom + 4) + 'px';
+  }
+}
+
+function closeZiweiDropdown() {
+  document.querySelectorAll('.ziwei-yun-dropdown').forEach(function (el) { el.remove(); });
 }
 
 function switchDim(dim) {
