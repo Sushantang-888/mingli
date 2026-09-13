@@ -974,6 +974,7 @@ async function refreshSupabaseUser() {
     SUPABASE_USER = null;
   }
   updateLoginButton();
+  if (SUPABASE_USER) mergeChartsFromCloud();  // 登录后从云端拉取命例合并
   return SUPABASE_USER;
 }
 
@@ -1031,6 +1032,57 @@ async function loadQuizNotesFromCloud(chartName) {
     var r = await SUPABASE.from('quiz_notes').select('quiz_notes').eq('chart_name', chartName).maybeSingle();
     return r.data ? r.data.quiz_notes : null;
   } catch (e) { return null; }
+}
+
+/* ============================================================
+ * 命例同步云端（charts 表）
+ * ============================================================ */
+async function syncChartToCloud(chart) {
+  if (!SUPABASE || !SUPABASE_USER) return;
+  try {
+    await SUPABASE.from('charts').upsert({
+      user_id: SUPABASE_USER.id,
+      chart_name: chart.name,
+      chart_data: chart,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'user_id,chart_name' });
+  } catch (e) { /* 静默 */ }
+}
+
+async function deleteChartFromCloud(chartName) {
+  if (!SUPABASE || !SUPABASE_USER) return;
+  try {
+    await SUPABASE.from('charts').delete().eq('chart_name', chartName);
+  } catch (e) { /* 静默 */ }
+}
+
+async function loadChartsFromCloud() {
+  if (!SUPABASE || !SUPABASE_USER) return [];
+  try {
+    var r = await SUPABASE.from('charts').select('chart_data');
+    return (r.data || []).map(function (row) { return row.chart_data; });
+  } catch (e) { return []; }
+}
+
+async function mergeChartsFromCloud() {
+  if (!SUPABASE || !SUPABASE_USER) return;
+  var cloudCharts = await loadChartsFromCloud();
+  if (!cloudCharts.length) return;
+  var merged = dedupeCharts(loadCharts().concat(cloudCharts));
+  persistCharts(merged);
+  renderChartList();
+}
+
+/* 一键上传本地命例到云端（手动命例首次上云用） */
+async function uploadAllChartsToCloud() {
+  if (!SUPABASE || !SUPABASE_USER) { alert('请先登录 GitHub'); return; }
+  var charts = loadCharts();
+  var manual = charts.filter(function (c) { return !c.isQuiz; });
+  if (!manual.length) { alert('没有可上传的手动命例'); return; }
+  for (var i = 0; i < manual.length; i++) {
+    await syncChartToCloud(manual[i]);
+  }
+  alert('已上传 ' + manual.length + ' 个命例到云端');
 }
 
 /* ============================================================
@@ -1138,6 +1190,7 @@ function saveChart() {
   charts.push(chart);
   persistCharts(charts);
   renderChartList();
+  syncChartToCloud(chart);  // 自动同步云端
 }
 
 /* 当前载入的命例（供批注复制等使用） */
@@ -1362,8 +1415,10 @@ function escapeHtml(s) {
 
 function deleteChart(id) {
   if (!confirm('确定删除这个命例？')) return;
+  var chart = loadCharts().find(function (c) { return c.id === id; });
   persistCharts(loadCharts().filter(function (c) { return c.id !== id; }));
   renderChartList();
+  if (chart) deleteChartFromCloud(chart.name);  // 云端也删
 }
 
 /* 渲染命例列表 */

@@ -56,6 +56,7 @@
           <span class="chart-list-title">命例列表</span>
           <span class="chart-list-count" id="chart-count"></span>
           <span class="chart-list-actions">
+            <button onclick="uploadAllChartsToCloud()">上传云端</button>
             <button onclick="exportCharts()">导出 JSON</button>
             <button onclick="document.getElementById('import-file').click()">导入 JSON</button>
             <input type="file" id="import-file" accept=".json" style="display:none" onchange="importCharts(this)">
