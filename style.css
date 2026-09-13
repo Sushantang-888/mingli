@@ -683,16 +683,16 @@ body {
   font-family: 'FZShengShiKaiShuS-EB-GB', '方正盛世楷书', 'STKaiti', 'KaiTi', '楷体', serif;
 }
 
-/* ===== 紫微维度切换按钮（放大） ===== */
+/* ===== 紫微维度切换按钮（放大，补偿整体缩放） ===== */
 .cdim {
-  font-size: 18px !important;
-  padding: 8px 18px !important;
-  min-width: 88px;
+  font-size: 40px !important;
+  padding: 14px 28px !important;
+  min-width: 180px;
 }
 .dim-arrow {
   display: inline-block;
-  margin-left: 4px;
-  font-size: 12px;
+  margin-left: 8px;
+  font-size: 22px;
   opacity: 0.6;
   cursor: pointer;
 }
