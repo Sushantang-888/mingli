@@ -42,6 +42,13 @@ var BRIGHTNESS_COLOR = {
   '平': '#b9ac6d', '陷': '#645d39', '闲': '#645d39', '利': '#645d39', '不': '#645d39'
 };
 
+/* 重要辅助星（六吉星 + 天马）：缩字号时跳过，不能被缩小忽视 */
+var KEY_MINOR_STARS = ['文昌', '文曲', '左辅', '右弼', '天魁', '天钺', '天马'];
+function isKeyMinor(s) {
+  var n = s.querySelector('.star-name');
+  return !!n && KEY_MINOR_STARS.indexOf(n.textContent.replace(/\s+/g, '')) >= 0;
+}
+
 /* 四化颜色 + class */
 var MUTAGEN_COLOR = { '禄': '#4ed5a6', '权': '#ff810c', '科': '#b9ac6d', '忌': '#605c7f' };
 var MUTAGEN_CLASS = { '禄': 'lu', '权': 'quan', '科': 'ke', '忌': 'ji' };
@@ -418,15 +425,17 @@ function fitStars(cell) {
   bottom.querySelectorAll('.star-adj').forEach(function (s) { s.style.fontSize = '20px'; s.style.lineHeight = '1'; });
   if (totalWidth() <= avail) return;
 
-  // 2. 辅星缩到 32px（亮度一起缩）
+  // 2. 辅星缩到 32px（亮度一起缩），重要辅助星（昌曲辅弼魁钺马）跳过
   bottom.querySelectorAll('.star-minor').forEach(function (s) {
+    if (isKeyMinor(s)) return;
     var n = s.querySelector('.star-name'); if (n) n.style.fontSize = '32px';
     var b = s.querySelector('.brightness'); if (b) b.style.fontSize = '18px';
   });
   if (totalWidth() <= avail) return;
 
-  // 3. 辅星缩到 20px
+  // 3. 辅星缩到 20px，重要辅助星（昌曲辅弼魁钺马）跳过
   bottom.querySelectorAll('.star-minor').forEach(function (s) {
+    if (isKeyMinor(s)) return;
     var n = s.querySelector('.star-name'); if (n) n.style.fontSize = '20px';
     var b = s.querySelector('.brightness'); if (b) b.style.fontSize = '14px';
   });

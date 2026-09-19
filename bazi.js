@@ -343,6 +343,18 @@ function renderAllYunRelations() {
   renderSanHui(chart, data.pillars, curDaYun, curLiuNian);
 }
 
+/* 八字 tab 显示时重算弧线：排盘时若八字盘 display:none，getBoundingClientRect 全 0，需切回后重定位 */
+function baziRelayoutArcs() {
+  if (!CURRENT_DATA) return;
+  requestAnimationFrame(function () {
+    requestAnimationFrame(function () {
+      renderXingChong(CURRENT_DATA.xingChong);
+      renderGanHe(CURRENT_DATA.ganHe);
+      renderAllYunRelations();
+    });
+  });
+}
+
 /* 柱顺序索引（用于计算相隔柱数 → 弧线高度分档） */
 var COL_INDEX = { year: 0, month: 1, day: 2, time: 3, dayun: 4, liunian: 5 };
 
