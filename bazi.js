@@ -290,6 +290,10 @@ function renderChart(data) {
   // 每次排盘默认回到「原局」视图，先只看四柱
   applyBaziViewMode('yuanju');
 
+  // 先存数据并动态算藏干间距，再渲染四柱
+  CURRENT_DATA = data;
+  applyRelSpace();
+
   // 侧标签（左）：乾造·纳音 竖排
   var labelLeft = document.getElementById('col-label-left');
   labelLeft.innerHTML = verticalChars(data.genderText + '·' + data.naYin);
@@ -301,7 +305,6 @@ function renderChart(data) {
   renderPillar(document.getElementById('col-time'),  data.pillars.time,  '时', data.shenSha.time, data.kongWang.time, data.changSheng.time);
 
   // 当前大运 / 流年 / 流月（各一列，顶带左右箭头）
-  CURRENT_DATA = data;
   renderCurYun();
   renderBatchNote();
 
@@ -332,9 +335,10 @@ function applyBaziViewMode(mode) {
 /* 切换八字视图（原局 / 流年大运） */
 function switchBaziView(mode) {
   applyBaziViewMode(mode);
+  applyRelSpace();
   renderCurYun();
-  if (mode === 'liunian' && window.innerWidth < 768) {
-    showToast('即将横屏展开，请旋转手机');
+  if (window.innerWidth < 768) {
+    showToast(mode === 'liunian' ? '即将翻转横屏' : '即将转回竖屏');
   }
   fitBaziChart();
   requestAnimationFrame(function () {
@@ -367,22 +371,28 @@ function clearYunRelations() {
   ).forEach(function (el) { el.remove(); });
 }
 
-/* 排盘表缩放：手机（<768px）→ 原局/流年大运都 scale-to-fit 到可用宽度，完整展示、不左右滑、上下滚动。
- * 横屏后设备宽度变大 → 同样的逻辑，只是 scale 更大、字更清楚（逻辑不变，内容不丢）。 */
+/* 排盘表缩放：
+ * 手机原局 → scale-to-fit 到竖屏宽度，完整展示；
+ * 手机流年大运 → 旋转 90° 横屏（.landscape），按横屏宽度（手机高度）缩放；
+ * 桌面 → 不缩放。 */
 function fitBaziChart() {
   var wrap = document.getElementById('chart-scale-wrap');
   var chart = wrap ? wrap.querySelector('.chart') : null;
   if (!wrap || !chart) return;
   var mobile = window.innerWidth < 768;
+  var isLandscape = mobile && BAZI_VIEW_MODE === 'liunian';
 
   if (!mobile) {
+    wrap.classList.remove('landscape');
     chart.style.transform = '';
+    document.body.style.removeProperty('--chart-scale');
     wrap.style.width = '';
     wrap.style.height = '';
     return;
   }
 
-  // 测量列的自然包围盒（先清 chart transform，getBoundingClientRect 得布局坐标）
+  // 测量列的自然包围盒（先移除横屏 class + 清 chart transform，得布局坐标）
+  wrap.classList.remove('landscape');
   chart.style.transform = '';
   var cols = chart.querySelectorAll('.col');
   var minX = Infinity, maxX = -Infinity;
@@ -396,13 +406,21 @@ function fitBaziChart() {
   var padR = parseFloat(getComputedStyle(chart).paddingRight) || 0;
   var contentW = (maxX - minX) + padL + padR;
   var contentH = chart.scrollHeight;
-  var avail = wrap.clientWidth || 358;
+  // 横屏：可用宽度 = 手机高度（旋转后变宽）；竖屏：可用宽度 = 卡片宽
+  var avail = isLandscape ? window.innerHeight : (wrap.clientWidth || 358);
   var scale = Math.min(1, avail / contentW);
 
-  // transform 作用在 chart 上（同紫微 fitBoard）；wrap 只定尺寸 + 裁剪
+  // transform 作用在 chart 上；wrap 只定尺寸 + 裁剪（横屏时由 CSS 定 fullscreen）
   chart.style.transform = 'scale(' + scale + ')';
-  wrap.style.width = (contentW * scale) + 'px';
-  wrap.style.height = (contentH * scale) + 'px';
+  document.body.style.setProperty('--chart-scale', scale);   // 供箭头反向缩放 + 浮层等比缩放
+  if (isLandscape) {
+    wrap.style.width = '';
+    wrap.style.height = '';
+    wrap.classList.add('landscape');
+  } else {
+    wrap.style.width = (contentW * scale) + 'px';
+    wrap.style.height = (contentH * scale) + 'px';
+  }
 }
 
 /* 按视图模式渲染关系：
@@ -412,8 +430,11 @@ function fitBaziChart() {
  * 弧线作为盘内子元素会随盘一起缩放/旋转，自动对齐。 */
 function renderBaziRelations() {
   if (!CURRENT_DATA) return;
+  var wrap = document.getElementById('chart-scale-wrap');
   var chart = document.querySelector('#bazi-board .chart');
   var saved = chart ? chart.style.transform : '';
+  var wasLandscape = wrap ? wrap.classList.contains('landscape') : false;
+  if (wrap) wrap.classList.remove('landscape');
   if (chart) chart.style.transform = '';
   renderXingChong(CURRENT_DATA.xingChong);
   renderGanHe(CURRENT_DATA.ganHe);
@@ -423,6 +444,38 @@ function renderBaziRelations() {
     clearYunRelations();
   }
   if (chart) chart.style.transform = saved;
+  if (wrap && wasLandscape) wrap.classList.add('landscape');
+}
+
+/* 动态计算地支与藏干之间的弧线预留空间：无刑冲破害合时收窄，让藏干贴近地支 */
+function computeRelSpace() {
+  var maxDrop = 0;
+  var order = { year: 0, month: 1, day: 2, time: 3, dayun: 4, liunian: 5 };
+  if (!CURRENT_DATA) return 0;
+  CURRENT_DATA.xingChong.forEach(function (rel) {
+    var diff = Math.abs(order[rel.a] - order[rel.b]);
+    if (diff <= 1) return;
+    var drop = arcDropByDist(diff);
+    if (drop > maxDrop) maxDrop = drop;
+  });
+  if (BAZI_VIEW_MODE === 'liunian') {
+    var curDaYun = CURRENT_DATA.daYunList[CURRENT_DATA.curDaYunIdx];
+    var curLiuNian = curDaYun ? curDaYun.liuNianList[CURRENT_DATA.curLiuNianIdx] : null;
+    var yunZhi = curDaYun ? curDaYun.ganZhi[1] : null;
+    var liuNianZhi = curLiuNian ? curLiuNian.ganZhi[1] : null;
+    calcYunXingChong(CURRENT_DATA.pillars, yunZhi, liuNianZhi).forEach(function (rel) {
+      var diff = Math.abs(order[rel.a] - order[rel.b]);
+      if (diff <= 1) return;
+      var drop = arcDropByDist(diff);
+      if (drop > maxDrop) maxDrop = drop;
+    });
+  }
+  return maxDrop > 0 ? (maxDrop + 20) : 0;
+}
+
+function applyRelSpace() {
+  var chart = document.querySelector('#bazi-board .chart');
+  if (chart) chart.style.setProperty('--rel-space', computeRelSpace() + 'px');
 }
 
 /* 渲染当前大运/流年/流月三列 */
@@ -822,6 +875,7 @@ function switchDaYun(idx) {
   CURRENT_DATA.curLiuNianIdx = 0;
   CURRENT_DATA.curLiuYueIdx = 0;
   closeYunDropdown();
+  applyRelSpace();
   renderCurYun();
   requestAnimationFrame(function () { requestAnimationFrame(renderBaziRelations); });
 }
@@ -829,12 +883,14 @@ function switchLiuNian(idx) {
   CURRENT_DATA.curLiuNianIdx = idx;
   CURRENT_DATA.curLiuYueIdx = 0;
   closeYunDropdown();
+  applyRelSpace();
   renderCurYun();
   requestAnimationFrame(function () { requestAnimationFrame(renderBaziRelations); });
 }
 function switchLiuYue(idx) {
   CURRENT_DATA.curLiuYueIdx = idx;
   closeYunDropdown();
+  applyRelSpace();
   renderCurYun();
   requestAnimationFrame(function () { requestAnimationFrame(renderBaziRelations); });
 }
@@ -1438,6 +1494,7 @@ function jumpToYear(year) {
     applyBaziViewMode('liunian');
   }
   closeYunDropdown();
+  applyRelSpace();
   renderCurYun();
   requestAnimationFrame(function () { requestAnimationFrame(renderBaziRelations); });
   if (typeof ziweiJumpToYear === 'function') ziweiJumpToYear(year);  // 紫微同步切流年

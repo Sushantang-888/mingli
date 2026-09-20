@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>命理排盘 · 八字 + 紫微</title>
-  <link rel="stylesheet" href="style.css?v=10">
+  <link rel="stylesheet" href="style.css?v=12">
 </head>
 <body>
   <div class="page">
@@ -61,15 +61,14 @@
       <div id="chart-list"></div>
     </div>
 
-    <!-- Tab 切换（只控制排盘） -->
-    <div class="tab-bar">
-      <button class="tab active" data-tab="bazi" onclick="switchTab('bazi')">八字</button>
-      <button class="tab" data-tab="ziwei" onclick="switchTab('ziwei')">紫微</button>
-    </div>
-
     <!-- 排盘区（tab 切换）+ 大赛题目（一直在右侧） -->
     <div class="quiz-layout" id="quiz-layout">
       <div class="board-slot">
+        <!-- 八字/紫微 Tab（排盘面板内，一级切换） -->
+        <div class="tab-bar">
+          <button class="tab active" data-tab="bazi" onclick="switchTab('bazi')">八字</button>
+          <button class="tab" data-tab="ziwei" onclick="switchTab('ziwei')">紫微</button>
+        </div>
         <!-- 八字排盘表 -->
         <div class="chart-card" id="bazi-board">
           <div class="bazi-view-switch">
@@ -105,8 +104,8 @@
   <script src="shensha.js"></script>
   <script src="quiz-bank.js"></script>
   <script src="iztro.min.js"></script>
-  <script src="bazi.js?v=10"></script>
-  <script src="ziwei.js?v=6"></script>
+  <script src="bazi.js?v=12"></script>
+  <script src="ziwei.js?v=7"></script>
   <script>
     /* 共享排盘：同时排八字和紫微 */
     function doPaipanAll() {

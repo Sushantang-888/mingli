@@ -154,6 +154,7 @@ function renderPalaces() {
       '<button class="cdim' + (CURRENT_DIM === 'decadal' ? ' active' : '') + '" data-dim="decadal" onclick="switchDim(\'decadal\')">大运 <span class="dim-arrow" onclick="event.stopPropagation(); ziweiYunDropdown(\'decadal\')">▾</span></button>' +
       '<button class="cdim' + (CURRENT_DIM === 'yearly' ? ' active' : '') + '" data-dim="yearly" onclick="switchDim(\'yearly\')">流年 <span class="dim-arrow" onclick="event.stopPropagation(); ziweiYunDropdown(\'yearly\')">▾</span></button>' +
       '<button class="cdim' + (CURRENT_DIM === 'monthly' ? ' active' : '') + '" data-dim="monthly" onclick="switchDim(\'monthly\')">流月 <span class="dim-arrow" onclick="event.stopPropagation(); ziweiYunDropdown(\'monthly\')">▾</span></button>' +
+      '<button class="cdim cdim-now" onclick="ziweiGoCurrentMonth()">当前月</button>' +
     '</div>';
   grid.appendChild(center);
 
@@ -485,14 +486,38 @@ function ziweiJumpToDate(dateStr) {
   } catch (e) { /* 静默 */ }
 }
 
+/* 「当前月」：跳到今天，大运/流年/流月一并选好 */
+function ziweiGoCurrentMonth() {
+  if (!ASTROLABE) return;
+  try {
+    var now = new Date();
+    var m = now.getMonth() + 1;
+    var d = now.getDate();
+    var dateStr = now.getFullYear() + '-' + (m < 10 ? '0' + m : m) + '-' + (d < 10 ? '0' + d : d);
+    HOROSCOPE = ASTROLABE.horoscope(dateStr, 0);
+    switchDim('monthly');
+  } catch (e) { /* 静默 */ }
+}
+
+/* 大限 index 字段 → decadalList 数组位置（yearlyList 要的是数组位置，不是 index 字段） */
+function decadalListPos(index) {
+  var dl = ASTROLABE.decadalList();
+  for (var i = 0; i < dl.length; i++) {
+    if (dl[i].index === index) return i;
+  }
+  return 0;
+}
+
 /* 当前流年的公历年份 */
 function ziweiCurrentYear() {
   if (!ASTROLABE) return null;
-  var dl = ASTROLABE.decadalList();
   var decIdx = (HOROSCOPE && HOROSCOPE.decadal) ? HOROSCOPE.decadal.index : 0;
-  var yl = ASTROLABE.yearlyList(decIdx);
-  var yearIdx = (HOROSCOPE && HOROSCOPE.yearly) ? HOROSCOPE.yearly.index : 0;
-  return (yl[yearIdx] && yl[yearIdx].year) ? yl[yearIdx].year : null;
+  var yl = ASTROLABE.yearlyList(decadalListPos(decIdx));
+  var targetIdx = (HOROSCOPE && HOROSCOPE.yearly) ? HOROSCOPE.yearly.index : -1;
+  for (var i = 0; i < yl.length; i++) {
+    if (yl[i].index === targetIdx) return yl[i].year;
+  }
+  return (yl.length ? yl[0].year : null);
 }
 
 /* 浮层：大运/流年/流月列表 */
@@ -507,7 +532,7 @@ function ziweiYunDropdown(key) {
     });
   } else if (key === 'yearly') {
     var decIdx = (HOROSCOPE && HOROSCOPE.decadal) ? HOROSCOPE.decadal.index : 0;
-    ASTROLABE.yearlyList(decIdx).forEach(function (y) {
+    ASTROLABE.yearlyList(decadalListPos(decIdx)).forEach(function (y) {
       items.push({ label: y.heavenlyStem + y.earthlyBranch + ' ' + y.year, date: y.year + '-6-1' });
     });
   } else if (key === 'monthly') {

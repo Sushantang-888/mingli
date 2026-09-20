@@ -139,27 +139,27 @@ body {
   box-shadow: 0 2px 16px rgba(0,0,0,0.06);
 }
 
-/* 八字：原局 / 流年大运 视图切换 */
+/* 八字：原局 / 流年大运 视图切换（二级切换，比一级 Tab 轻） */
 .bazi-view-switch {
   display: flex;
   justify-content: center;
-  gap: 6px;
-  margin-bottom: 28px;
+  gap: 8px;
+  margin-bottom: 24px;
 }
 .view-btn {
-  font-size: 16px;
-  padding: 8px 24px;
-  border: 1px solid #ccc;
+  font-size: 15px;
+  padding: 4px 18px;
+  border: 1px solid transparent;
   border-radius: 100px;
-  background: #fff;
-  color: #555;
+  background: transparent;
+  color: #999;
   cursor: pointer;
   font-family: inherit;
 }
 .view-btn.active {
-  background: #0b0060;
-  color: #fff;
+  color: #0b0060;
   border-color: #0b0060;
+  background: #f4f1ea;
 }
 
 /* 排盘表：列横向，列间距 40px */
@@ -265,7 +265,7 @@ body {
 .cell.cs   { display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 56px; }  /* 十二长生（竖排） */
 .cs-item { font-size: 24px; line-height: 1; color: var(--ink-dim); }
 .cs-item i { font-style: normal; font-size: 14px; color: var(--ink-dim); margin-left: 2px; }
-.cell.rel-space { min-height: 150px; }  /* 弧线预留空间（容纳最高130px弧线+胶囊，避免压藏干） */
+.cell.rel-space { min-height: var(--rel-space, 150px); }  /* 弧线预留空间：由 JS 按实际刑冲破害合动态计算，无弧线时收窄 */
 
 /* 地支 + 空亡标记 */
 .zhi-wrap { position: relative; }
@@ -347,11 +347,14 @@ body {
   cursor: pointer;
 }
 .toggle-icon {
+  display: inline-block;
   font-size: 30px;
   color: #888888;
   white-space: nowrap;
   user-select: none;
   line-height: 1;
+  transform: scale(calc(1 / var(--chart-scale, 1)));   /* 反向缩放，箭头不随盘缩小 */
+  transform-origin: center;
 }
 .toggle-icon i { font-style: normal; letter-spacing: -2px; }
 .pillar-toggle:hover .toggle-icon { color: #333333; }
@@ -364,7 +367,8 @@ body {
   border-radius: 12px;
   box-shadow: 0 8px 30px rgba(0,0,0,0.2);
   padding: 16px 20px;
-  transform: translateX(-50%);
+  transform: translateX(-50%) scale(var(--chart-scale, 1));   /* 跟随排盘缩放比例 */
+  transform-origin: top center;
   max-width: 92vw;
   overflow-x: auto;
 }
@@ -774,27 +778,30 @@ body {
 }
 .dim-tab.active { background: #0b0060; color: #fff; border-color: #0b0060; }
 
-/* ===== Tab 切换 ===== */
+/* ===== 八字/紫微 Tab（排盘面板内，一级切换，分段控件） ===== */
 .tab-bar {
-  display: flex;
-  gap: 6px;
+  display: inline-flex;
+  gap: 2px;
   justify-content: center;
-  margin-bottom: 16px;
+  padding: 4px;
+  background: #e9e5db;
+  border-radius: 100px;
+  margin: 0 auto 20px;
 }
 .tab {
   font-size: 16px;
-  padding: 8px 24px;
-  border: 1px solid #ccc;
+  padding: 8px 28px;
+  border: none;
   border-radius: 100px;
-  background: #fff;
-  color: #555;
+  background: transparent;
+  color: #777;
   cursor: pointer;
   font-family: inherit;
 }
 .tab.active {
   background: #0b0060;
   color: #fff;
-  border-color: #0b0060;
+  box-shadow: 0 1px 5px rgba(11, 0, 96, 0.25);
 }
 
 /* 紫微盘用 EB-GB 字体（body 默认 B-GB） */
