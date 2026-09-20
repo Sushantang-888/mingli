@@ -92,6 +92,29 @@ body {
   box-shadow: 0 2px 16px rgba(0,0,0,0.06);
 }
 
+/* 八字：原局 / 流年大运 视图切换 */
+.bazi-view-switch {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 28px;
+}
+.view-btn {
+  font-size: 16px;
+  padding: 8px 24px;
+  border: 1px solid #ccc;
+  border-radius: 100px;
+  background: #fff;
+  color: #555;
+  cursor: pointer;
+  font-family: inherit;
+}
+.view-btn.active {
+  background: #0b0060;
+  color: #fff;
+  border-color: #0b0060;
+}
+
 /* 排盘表：列横向，列间距 40px */
 .chart {
   position: relative;

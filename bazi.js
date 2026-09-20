@@ -287,6 +287,9 @@ function renderPillar(container, pillar, name, shenShaList, kongWang, changSheng
 
 /* 渲染整个排盘表 */
 function renderChart(data) {
+  // 每次排盘默认回到「原局」视图，先只看四柱
+  applyBaziViewMode('yuanju');
+
   // 侧标签（左）：乾造·纳音 竖排
   var labelLeft = document.getElementById('col-label-left');
   labelLeft.innerHTML = verticalChars(data.genderText + '·' + data.naYin);
@@ -305,21 +308,64 @@ function renderChart(data) {
   // 刑冲破害合标记（胶囊 + 箭头，跨柱连线）
   // 延迟两帧，确保 renderPillar 重建后的布局已完全稳定（否则位置会偏移）
   requestAnimationFrame(function () {
-    requestAnimationFrame(function () {
-      renderXingChong(data.xingChong);
-      renderGanHe(data.ganHe);
-      renderAllYunRelations();
-    });
+    requestAnimationFrame(renderBaziRelations);
   });
 }
 
 /* 当前排盘数据（供 dropdown 切换使用） */
 var CURRENT_DATA = null;
 
+/* 八字视图模式：yuanju=只看原局四柱；liunian=原局+大运流年流月 */
+var BAZI_VIEW_MODE = 'yuanju';
+
+/* 应用视图模式：更新切换按钮高亮 */
+function applyBaziViewMode(mode) {
+  BAZI_VIEW_MODE = mode;
+  document.querySelectorAll('#bazi-board .view-btn').forEach(function (btn) {
+    btn.classList.toggle('active', btn.dataset.view === mode);
+  });
+}
+
+/* 切换八字视图（原局 / 流年大运） */
+function switchBaziView(mode) {
+  applyBaziViewMode(mode);
+  renderCurYun();
+  requestAnimationFrame(function () {
+    requestAnimationFrame(renderBaziRelations);
+  });
+}
+
+/* 清除大运/流年 vs 原盘的关系标记（弧线 + 胶囊） */
+function clearYunRelations() {
+  var chart = document.querySelector('.chart');
+  if (!chart) return;
+  chart.querySelectorAll(
+    '.rel-mark-yun, .rel-arc-yun, .rel-mark-yungan, .rel-arc-yungan, ' +
+    '.rel-mark-sit, .rel-arc-sit, .rel-mark-hui, .rel-arc-hui'
+  ).forEach(function (el) { el.remove(); });
+}
+
+/* 按视图模式渲染关系：
+ * 原局模式只画四柱内部的刑冲破害合 + 天干五合；
+ * 流年大运模式再叠加大运/流年 vs 原盘的关系。 */
+function renderBaziRelations() {
+  if (!CURRENT_DATA) return;
+  renderXingChong(CURRENT_DATA.xingChong);
+  renderGanHe(CURRENT_DATA.ganHe);
+  if (BAZI_VIEW_MODE === 'liunian') {
+    renderAllYunRelations();
+  } else {
+    clearYunRelations();
+  }
+}
+
 /* 渲染当前大运/流年/流月三列 */
 function renderCurYun() {
   var chart = document.querySelector('.chart');
   chart.querySelectorAll('.col-dayun, .col-liunian, .col-liuyue').forEach(function (el) { el.remove(); });
+
+  // 原局视图：只显示四柱，不渲染大运/流年/流月列
+  if (BAZI_VIEW_MODE === 'yuanju') return;
 
   var data = CURRENT_DATA;
   var curDaYun = data.daYunList[data.curDaYunIdx];
@@ -347,11 +393,7 @@ function renderAllYunRelations() {
 function baziRelayoutArcs() {
   if (!CURRENT_DATA) return;
   requestAnimationFrame(function () {
-    requestAnimationFrame(function () {
-      renderXingChong(CURRENT_DATA.xingChong);
-      renderGanHe(CURRENT_DATA.ganHe);
-      renderAllYunRelations();
-    });
+    requestAnimationFrame(renderBaziRelations);
   });
 }
 
@@ -708,20 +750,20 @@ function switchDaYun(idx) {
   CURRENT_DATA.curLiuYueIdx = 0;
   closeYunDropdown();
   renderCurYun();
-  requestAnimationFrame(function () { requestAnimationFrame(renderAllYunRelations); });
+  requestAnimationFrame(function () { requestAnimationFrame(renderBaziRelations); });
 }
 function switchLiuNian(idx) {
   CURRENT_DATA.curLiuNianIdx = idx;
   CURRENT_DATA.curLiuYueIdx = 0;
   closeYunDropdown();
   renderCurYun();
-  requestAnimationFrame(function () { requestAnimationFrame(renderAllYunRelations); });
+  requestAnimationFrame(function () { requestAnimationFrame(renderBaziRelations); });
 }
 function switchLiuYue(idx) {
   CURRENT_DATA.curLiuYueIdx = idx;
   closeYunDropdown();
   renderCurYun();
-  requestAnimationFrame(function () { requestAnimationFrame(renderAllYunRelations); });
+  requestAnimationFrame(function () { requestAnimationFrame(renderBaziRelations); });
 }
 function closeYunDropdown() {
   document.querySelectorAll('.yun-dropdown').forEach(function (el) { el.remove(); });
@@ -1289,9 +1331,13 @@ function jumpToYear(year) {
   data.curDaYunIdx = info.daYunIdx;
   data.curLiuNianIdx = info.liuNianIdx;
   data.curLiuYueIdx = 0;
+  // 若当前在「原局」视图，自动切到「流年大运」再选中该年
+  if (BAZI_VIEW_MODE === 'yuanju') {
+    applyBaziViewMode('liunian');
+  }
   closeYunDropdown();
   renderCurYun();
-  requestAnimationFrame(function () { requestAnimationFrame(renderAllYunRelations); });
+  requestAnimationFrame(function () { requestAnimationFrame(renderBaziRelations); });
   if (typeof ziweiJumpToYear === 'function') ziweiJumpToYear(year);  // 紫微同步切流年
 }
 
