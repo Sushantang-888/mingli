@@ -360,7 +360,7 @@ function goToday() {
   closeYunDropdown();
   applyRelSpace();
   renderCurYun();
-  if (window.innerWidth < 768) showToast('即将翻转横屏');
+  showToast(window.innerWidth < 768 ? '已选中当前年月，请横屏查看' : '已选中当前年月');
   fitBaziChart();
   requestAnimationFrame(function () {
     requestAnimationFrame(renderBaziRelations);
