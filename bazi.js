@@ -1555,6 +1555,7 @@ function renderQuizQuestions(chart) {
     });
     html += '</div>';
     html += '<textarea class="quiz-note" data-q="' + q.no + '" placeholder="写批注…" oninput="saveQuizNote(' + chart.id + ', ' + q.no + ', this.value)">' + escapeHtml(val) + '</textarea>';
+    html += '<div class="quiz-note-preview" data-q="' + q.no + '"></div>';
     html += '</div>';
   });
   el.innerHTML = html;

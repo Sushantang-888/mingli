@@ -184,6 +184,68 @@ var GLOSSARY = {
   '戌': { category: '地支', definition: '阳土，生肖狗，藏干戊辛丁。' },
   '亥': { category: '地支', definition: '阴水，生肖猪，藏干壬甲。' },
 
+  /* ---------- 六十甲子（纳音） ---------- */
+  '甲子': { category: '六十甲子', definition: '纳音海中金。' },
+  '乙丑': { category: '六十甲子', definition: '纳音海中金。' },
+  '丙寅': { category: '六十甲子', definition: '纳音炉中火。' },
+  '丁卯': { category: '六十甲子', definition: '纳音炉中火。' },
+  '戊辰': { category: '六十甲子', definition: '纳音大林木。' },
+  '己巳': { category: '六十甲子', definition: '纳音大林木。' },
+  '庚午': { category: '六十甲子', definition: '纳音路旁土。' },
+  '辛未': { category: '六十甲子', definition: '纳音路旁土。' },
+  '壬申': { category: '六十甲子', definition: '纳音剑锋金。' },
+  '癸酉': { category: '六十甲子', definition: '纳音剑锋金。' },
+  '甲戌': { category: '六十甲子', definition: '纳音山头火。' },
+  '乙亥': { category: '六十甲子', definition: '纳音山头火。' },
+  '丙子': { category: '六十甲子', definition: '纳音涧下水。' },
+  '丁丑': { category: '六十甲子', definition: '纳音涧下水。' },
+  '戊寅': { category: '六十甲子', definition: '纳音城头土。' },
+  '己卯': { category: '六十甲子', definition: '纳音城头土。' },
+  '庚辰': { category: '六十甲子', definition: '纳音白蜡金。' },
+  '辛巳': { category: '六十甲子', definition: '纳音白蜡金。' },
+  '壬午': { category: '六十甲子', definition: '纳音杨柳木。' },
+  '癸未': { category: '六十甲子', definition: '纳音杨柳木。' },
+  '甲申': { category: '六十甲子', definition: '纳音泉中水。' },
+  '乙酉': { category: '六十甲子', definition: '纳音泉中水。' },
+  '丙戌': { category: '六十甲子', definition: '纳音屋上土。' },
+  '丁亥': { category: '六十甲子', definition: '纳音屋上土。' },
+  '戊子': { category: '六十甲子', definition: '纳音霹雳火。' },
+  '己丑': { category: '六十甲子', definition: '纳音霹雳火。' },
+  '庚寅': { category: '六十甲子', definition: '纳音松柏木。' },
+  '辛卯': { category: '六十甲子', definition: '纳音松柏木。' },
+  '壬辰': { category: '六十甲子', definition: '纳音长流水。' },
+  '癸巳': { category: '六十甲子', definition: '纳音长流水。' },
+  '甲午': { category: '六十甲子', definition: '纳音沙中金。' },
+  '乙未': { category: '六十甲子', definition: '纳音沙中金。' },
+  '丙申': { category: '六十甲子', definition: '纳音山下火。' },
+  '丁酉': { category: '六十甲子', definition: '纳音山下火。' },
+  '戊戌': { category: '六十甲子', definition: '纳音平地木。' },
+  '己亥': { category: '六十甲子', definition: '纳音平地木。' },
+  '庚子': { category: '六十甲子', definition: '纳音壁上土。' },
+  '辛丑': { category: '六十甲子', definition: '纳音壁上土。' },
+  '壬寅': { category: '六十甲子', definition: '纳音金箔金。' },
+  '癸卯': { category: '六十甲子', definition: '纳音金箔金。' },
+  '甲辰': { category: '六十甲子', definition: '纳音覆灯火。' },
+  '乙巳': { category: '六十甲子', definition: '纳音覆灯火。' },
+  '丙午': { category: '六十甲子', definition: '纳音天河水。' },
+  '丁未': { category: '六十甲子', definition: '纳音天河水。' },
+  '戊申': { category: '六十甲子', definition: '纳音大驿土。' },
+  '己酉': { category: '六十甲子', definition: '纳音大驿土。' },
+  '庚戌': { category: '六十甲子', definition: '纳音钗钏金。' },
+  '辛亥': { category: '六十甲子', definition: '纳音钗钏金。' },
+  '壬子': { category: '六十甲子', definition: '纳音桑柘木。' },
+  '癸丑': { category: '六十甲子', definition: '纳音桑柘木。' },
+  '甲寅': { category: '六十甲子', definition: '纳音大溪水。' },
+  '乙卯': { category: '六十甲子', definition: '纳音大溪水。' },
+  '丙辰': { category: '六十甲子', definition: '纳音沙中土。' },
+  '丁巳': { category: '六十甲子', definition: '纳音沙中土。' },
+  '戊午': { category: '六十甲子', definition: '纳音天上火。' },
+  '己未': { category: '六十甲子', definition: '纳音天上火。' },
+  '庚申': { category: '六十甲子', definition: '纳音石榴木。' },
+  '辛酉': { category: '六十甲子', definition: '纳音石榴木。' },
+  '壬戌': { category: '六十甲子', definition: '纳音大海水。' },
+  '癸亥': { category: '六十甲子', definition: '纳音大海水。' },
+
   /* ---------- 十二长生 ---------- */
   '长生': { category: '十二长生', definition: '如人之初生，生气方盛，吉。' },
   '沐浴': { category: '十二长生', definition: '如人沐浴，败地，主桃花、情欲。' },
@@ -329,6 +391,8 @@ function refreshGather() {
       el.classList.remove('term');
     }
   });
+  // 隐藏批注富文本预览
+  document.querySelectorAll('.quiz-note-preview').forEach(function (p) { p.style.display = 'none'; p.innerHTML = ''; });
   if (!GATHER_MODE) return;
 
   function tag(el, key) {
@@ -360,6 +424,18 @@ function refreshGather() {
   // 3. 批注 / 题目文字：字典最长匹配扫描
   document.querySelectorAll('.batch-text, .quiz-q-topic, .quiz-opt').forEach(function (root) {
     annotateText(root);
+  });
+
+  // 4. 手写批注（textarea）→ 富文本预览可拾词
+  document.querySelectorAll('.quiz-note').forEach(function (ta) {
+    var prev = ta.parentNode.querySelector('.quiz-note-preview');
+    if (!prev) return;
+    var val = ta.value.trim();
+    if (val) {
+      prev.innerHTML = escapeHtml(val);
+      annotateText(prev);
+      prev.style.display = 'block';
+    }
   });
 }
 

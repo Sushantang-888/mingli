@@ -663,6 +663,22 @@ img.term {
   border-color: #0b0060;
   background: #ffffff;
 }
+/* 手写批注的富文本预览（拾词模式开启时显示，可拾词） */
+.quiz-note-preview {
+  display: none;
+  min-width: 0;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px dashed #d5d1c6;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #333333;
+  background: #faf9f6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
 .quiz-q-topic {
   font-size: 18px;
   font-weight: 600;
