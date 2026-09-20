@@ -247,6 +247,7 @@ function verticalChars(text) {
 /* 渲染一根柱（年月日时通用），固定 11 行保证神煞起点一致 */
 function renderPillar(container, pillar, name, shenShaList, kongWang, changSheng) {
   var html = '';
+  container.setAttribute('data-gz', pillar.gan + pillar.zhi);   // 标记此柱干支（拾词柱整体释义用）
   // 行1 柱名
   html += '<div class="cell name">' + name + '</div>';
   // 行2 天干

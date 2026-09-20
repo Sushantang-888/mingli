@@ -104,8 +104,8 @@ var GLOSSARY = {
     ] },
   '丙': { category: '天干', definition: '阳火，太阳，主光明、热烈、普照。',
     citations: [
-      { book: '《滴天髓》', chapter: '天干论', text: '丙火猛烈，欺霜侮雪。能煅庚金，逢辛反怯。土众成慈，水猖显节。虎马犬乡，甲来成灭。' },
-      { book: '《穷通宝鉴》', chapter: '调候', text: '丙火为太阳，调候以壬水为尊（太阳之火，需壬水相济，方能普照万物、水火既济）。' }
+      { book: '《滴天髓》', chapter: '天干论', text: '丙火猛烈，欺霜侮雪。能煅庚金，逢辛反怯。土众成慈，水猖显节。虎马犬乡，甲来焚灭。' },
+      { book: '《穷通宝鉴》', chapter: '调候', text: '丙火为太阳之火，喜壬水映辉，方成既济（丙不离壬，无论生于何月，皆以壬水为先；忌癸水蔽日）。' }
     ] },
   '丁': { category: '天干', definition: '阴火，灯烛之火，主柔和、文明、细腻。',
     citations: [
@@ -400,8 +400,14 @@ function refreshGather() {
   }
 
   // 1. 排盘表结构标注（八字）
-  document.querySelectorAll('.cell.gan').forEach(function (el) { tag(el, el.textContent.trim()); });          // 天干
-  document.querySelectorAll('.zhi-char').forEach(function (el) { tag(el, el.textContent.trim()); });          // 地支
+  // 天干/地支 → 优先指向所在柱的整体六十甲子（如「辛卯」），否则退回单个字
+  function gzOf(el) {
+    var col = el.closest('.col-pillar');
+    var gz = col ? col.getAttribute('data-gz') : null;
+    return (gz && GLOSSARY[gz]) ? gz : el.textContent.trim();
+  }
+  document.querySelectorAll('.cell.gan').forEach(function (el) { tag(el, gzOf(el)); });          // 天干→柱
+  document.querySelectorAll('.zhi-char').forEach(function (el) { tag(el, gzOf(el)); });          // 地支→柱
   document.querySelectorAll('.cell.ss').forEach(function (el) { tag(el, SHI_SHEN_FULL[el.textContent.trim()]); }); // 十神
   document.querySelectorAll('.shensha span').forEach(function (el) { tag(el, el.textContent.trim()); });      // 神煞
   document.querySelectorAll('.zhi-mark.kong').forEach(function (el) { tag(el, '空亡'); });                     // 空亡
@@ -499,9 +505,13 @@ function showGatherPopup(termEl) {
   (g.citations || []).forEach(function (c) {
     citeHtml += '<div class="gp-cite"><span class="gp-cite-book">' + c.book + (c.chapter ? '·' + c.chapter : '') + '</span><span class="gp-cite-text">' + c.text + '</span></div>';
   });
+  var related = g.related;
+  if (!related && g.category === '六十甲子' && key.length === 2) {
+    related = [key[0], key[1]];   // 六十甲子自动关联天干 + 地支
+  }
   var relatedHtml = '';
-  if (g.related && g.related.length) {
-    relatedHtml = '<div class="gp-related">相关：' + g.related.map(function (r) {
+  if (related && related.length) {
+    relatedHtml = '<div class="gp-related">相关：' + related.map(function (r) {
       return '<span class="gp-related-item" onclick="showGatherPopupByKey(\'' + r + '\')">' + r + '</span>';
     }).join('') + '</div>';
   }

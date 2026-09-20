@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>命理词库 · 资料库</title>
+  <style>
+    body { font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif; margin: 0; background: #f2efe8; color: #1a1a1a; -webkit-font-smoothing: antialiased; }
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 24px 16px 60px; }
+    h1 { font-size: 24px; margin-bottom: 6px; }
+    .tip { color: #999; font-size: 14px; line-height: 1.6; margin-bottom: 8px; }
+    .warn { color: #c0392b; font-size: 13px; margin-bottom: 12px; }
+    .src { font-size: 13px; color: #555; margin-bottom: 20px; line-height: 1.8; }
+    .src a { color: #0b0060; }
+    .cat { font-size: 20px; font-weight: 600; margin: 28px 0 12px; color: #0b0060; border-bottom: 2px solid #0b0060; padding-bottom: 6px; }
+    .item { background: #fff; border-radius: 8px; padding: 14px 18px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .item .term { font-size: 18px; font-weight: 600; }
+    .item .term .tag { font-size: 12px; color: #fff; background: #0b0060; padding: 1px 8px; border-radius: 100px; margin-left: 8px; vertical-align: 2px; }
+    .item .def { font-size: 15px; color: #333; margin-top: 6px; line-height: 1.7; }
+    .item .cite { font-size: 13px; color: #888; margin-top: 8px; line-height: 1.6; border-top: 1px dashed #eee; padding-top: 6px; }
+    .item .cite .book { color: #0b0060; font-weight: 600; }
+    .back { position: fixed; top: 16px; right: 16px; background: #0b0060; color: #fff; padding: 8px 16px; border-radius: 100px; text-decoration: none; font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="./">← 返回排盘</a>
+    <h1>命理词库 · 资料库</h1>
+    <div class="tip">共 <span id="count"></span> 个词条，按分类整理，与排盘里的「拾词释义」共用同一份词库数据（glossary.js），永远同步。</div>
+    <div class="warn">⚠️ 古籍原文为按记忆录入，<b>待逐条校对</b>——请对照原书 review，凡有出入请告知我修正；缺原文/释义的词条请补充。</div>
+    <div class="src"><b>参考原文来源（在线古籍）</b>：
+      <a href="https://zh.wikisource.org/zh/%E6%BB%B4%E5%A4%A9%E9%AB%93/02" target="_blank">《滴天髓》天干论</a> ·
+      <a href="https://zh.wikisource.org/zh-hant/%E7%A9%B7%E9%80%9A%E5%AE%9D%E9%89%B4" target="_blank">《穷通宝鉴》</a> ·
+      <a href="https://zh.wikisource.org/zh-hant/%E7%A9%B7%E9%80%9A%E5%AE%9D%E9%89%B4" target="_blank">《栏江网》（穷通宝鉴别名）</a>
+    </div>
+    <div id="list"></div>
+  </div>
+  <script src="glossary.js"></script>
+  <script>
+    var order = ['天干','地支','六十甲子','十神','十二长生','神煞','神煞/星曜','合局','刑冲','格局','俗语','紫微主星','紫微辅星','亮度','四化','四化关系'];
+    var groups = {};
+    Object.keys(GLOSSARY).forEach(function (k) {
+      var g = GLOSSARY[k];
+      (groups[g.category] = groups[g.category] || []).push({ key: k, g: g });
+    });
+    var cats = Object.keys(groups).sort(function (a, b) {
+      var ia = order.indexOf(a), ib = order.indexOf(b);
+      if (ia < 0) ia = 999; if (ib < 0) ib = 999;
+      return ia - ib;
+    });
+    var html = '', count = 0;
+    cats.forEach(function (cat) {
+      html += '<div class="cat">' + cat + '</div>';
+      groups[cat].forEach(function (it) {
+        count++;
+        var cites = (it.g.citations || []).map(function (c) {
+          return '<span class="book">' + c.book + (c.chapter ? '·' + c.chapter : '') + '</span>' + (c.text ? '：' + c.text : '');
+        }).join('<br>');
+        html += '<div class="item"><div class="term">' + it.key + '<span class="tag">' + it.g.category + '</span></div>';
+        html += '<div class="def">' + it.g.definition + '</div>';
+        if (cites) html += '<div class="cite">' + cites + '</div>';
+        html += '</div>';
+      });
+    });
+    document.getElementById('count').textContent = count;
+    document.getElementById('list').innerHTML = html;
+  </script>
+</body>
+</html>
