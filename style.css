@@ -31,6 +31,7 @@ body {
   font-family: 'FZShengShiKaiShuS-B-GB', '方正盛世楷书', 'STKaiti', 'KaiTi', '楷体', serif;
   -webkit-font-smoothing: antialiased;
   color: #1a1a1a;
+  touch-action: manipulation;   /* 禁用双击缩放 */
 }
 
 /* 排盘核心字（天干/地支/藏干/神煞/十二长生）用特粗 EB-GB */
@@ -471,11 +472,12 @@ body {
 }
 .batch-text .hl { color: #c0392b; }
 
-/* 大赛布局（左右两栏，仅大赛命例激活） */
+/* 大赛/命例布局：默认上下结构（先命盘，再题目+批注）；
+ * 仅当宽度足够平铺两个「八字盘带大运流年」（2×1272≈2544px）时才左右两栏。 */
 .quiz-layout { display: block; }
 .quiz-layout.is-quiz {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: 1fr;
   gap: 24px;
   align-items: stretch;
 }
@@ -488,6 +490,11 @@ body {
   width: auto;
   max-width: none;
   margin: 0;
+}
+@media (min-width: 2544px) {
+  .quiz-layout.is-quiz {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
 }
 
 /* 大赛标签 + 题目 */

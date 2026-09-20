@@ -380,17 +380,15 @@ function fitMutagens(cell) {
   mid.style.height = maxH + 'px';
 }
 
-/* 等比缩放：根据视口高度动态缩放，让整个盘一屏看完 */
+/* 等比缩放：按宽度缩放（盘宽 = 可用宽度 = 手机宽，字最大化展示）；页面上下滚动看完整盘。
+ * 不再按高度缩放（滚动时地址栏收起导致 innerHeight 变化 → 盘大小晃动）。 */
 function fitBoard() {
   var board = document.querySelector('.board-wrap');
   var grid = document.querySelector('.palace-grid');
-  var input = document.querySelector('.input-panel');
   if (!board || !grid) return;
-  var inputH = input ? input.getBoundingClientRect().height : 0;
-  var palaceH = 400 + DIM_LEVEL[CURRENT_DIM] * 32;
-  var totalH = palaceH * 4;
-  var availH = window.innerHeight - inputH - 100;  // 留边距
-  var scale = Math.max(0.2, Math.min(1, availH / totalH));
+  var availW = board.parentElement ? board.parentElement.clientWidth : window.innerWidth;
+  var totalH = grid.scrollHeight || 1600;
+  var scale = Math.min(1, availW / 1200);
   board.style.width = (1200 * scale) + 'px';
   board.style.height = (totalH * scale) + 'px';
   grid.style.transform = 'scale(' + scale + ')';
@@ -549,6 +547,15 @@ function ziweiYunDropdown(key) {
 function closeZiweiDropdown() {
   document.querySelectorAll('.ziwei-yun-dropdown').forEach(function (el) { el.remove(); });
 }
+
+/* 点击浮层之外的区域关闭浮层（与八字 dropdown 一致） */
+document.addEventListener('click', function (e) {
+  var dd = document.querySelector('.ziwei-yun-dropdown');
+  if (!dd) return;
+  if (dd.contains(e.target)) return;                       // 点浮层内部不关闭
+  if (e.target.closest && e.target.closest('.dim-arrow')) return;  // 点箭头由 toggle 处理
+  closeZiweiDropdown();
+});
 
 function switchDim(dim) {
   CURRENT_DIM = dim;

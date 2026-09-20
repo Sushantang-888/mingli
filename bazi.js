@@ -334,7 +334,7 @@ function switchBaziView(mode) {
   applyBaziViewMode(mode);
   renderCurYun();
   if (mode === 'liunian' && window.innerWidth < 768) {
-    showToast('即将横屏展开');
+    showToast('即将横屏展开，请旋转手机');
   }
   fitBaziChart();
   requestAnimationFrame(function () {
@@ -367,24 +367,22 @@ function clearYunRelations() {
   ).forEach(function (el) { el.remove(); });
 }
 
-/* 排盘表缩放：手机原局 → scale-to-fit 完整展示；手机流年大运 → 横屏旋转；否则清除 */
+/* 排盘表缩放：手机（<768px）→ 原局/流年大运都 scale-to-fit 到可用宽度，完整展示、不左右滑、上下滚动。
+ * 横屏后设备宽度变大 → 同样的逻辑，只是 scale 更大、字更清楚（逻辑不变，内容不丢）。 */
 function fitBaziChart() {
   var wrap = document.getElementById('chart-scale-wrap');
   var chart = wrap ? wrap.querySelector('.chart') : null;
   if (!wrap || !chart) return;
   var mobile = window.innerWidth < 768;
-  var isLandscape = mobile && BAZI_VIEW_MODE === 'liunian';
 
   if (!mobile) {
-    wrap.classList.remove('landscape');
     chart.style.transform = '';
     wrap.style.width = '';
     wrap.style.height = '';
     return;
   }
 
-  // 测量列的自然包围盒（先移除横屏 class + 清 chart transform，getBoundingClientRect 得布局坐标）
-  wrap.classList.remove('landscape');
+  // 测量列的自然包围盒（先清 chart transform，getBoundingClientRect 得布局坐标）
   chart.style.transform = '';
   var cols = chart.querySelectorAll('.col');
   var minX = Infinity, maxX = -Infinity;
@@ -398,19 +396,13 @@ function fitBaziChart() {
   var padR = parseFloat(getComputedStyle(chart).paddingRight) || 0;
   var contentW = (maxX - minX) + padL + padR;
   var contentH = chart.scrollHeight;
-  var avail = isLandscape ? window.innerHeight : (wrap.clientWidth || 358);
+  var avail = wrap.clientWidth || 358;
   var scale = Math.min(1, avail / contentW);
 
-  // transform 作用在 chart 上（同紫微 fitBoard）；横屏时 wrapper 由 CSS 定 fullscreen
+  // transform 作用在 chart 上（同紫微 fitBoard）；wrap 只定尺寸 + 裁剪
   chart.style.transform = 'scale(' + scale + ')';
-  if (isLandscape) {
-    wrap.style.width = '';
-    wrap.style.height = '';
-    wrap.classList.add('landscape');
-  } else {
-    wrap.style.width = (contentW * scale) + 'px';
-    wrap.style.height = (contentH * scale) + 'px';
-  }
+  wrap.style.width = (contentW * scale) + 'px';
+  wrap.style.height = (contentH * scale) + 'px';
 }
 
 /* 按视图模式渲染关系：
@@ -420,11 +412,8 @@ function fitBaziChart() {
  * 弧线作为盘内子元素会随盘一起缩放/旋转，自动对齐。 */
 function renderBaziRelations() {
   if (!CURRENT_DATA) return;
-  var wrap = document.getElementById('chart-scale-wrap');
   var chart = document.querySelector('#bazi-board .chart');
   var saved = chart ? chart.style.transform : '';
-  var wasLandscape = wrap ? wrap.classList.contains('landscape') : false;
-  if (wrap) wrap.classList.remove('landscape');
   if (chart) chart.style.transform = '';
   renderXingChong(CURRENT_DATA.xingChong);
   renderGanHe(CURRENT_DATA.ganHe);
@@ -434,7 +423,6 @@ function renderBaziRelations() {
     clearYunRelations();
   }
   if (chart) chart.style.transform = saved;
-  if (wrap && wasLandscape) wrap.classList.add('landscape');
 }
 
 /* 渲染当前大运/流年/流月三列 */
