@@ -171,7 +171,7 @@ body {
   justify-content: center;
   width: max-content;
   min-width: 100%;
-  padding: 0 80px;
+  padding: 30px 80px 0;   /* 顶部 30px 给大运/流年/流月切换箭头留空间，避免被 overflow 裁掉 */
   transform-origin: top left;
 }
 
