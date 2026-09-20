@@ -226,7 +226,7 @@ function renderMid(p) {
       if (m.type === '对宫化' || m.type === '自化') {
         var imgSrc = MUTAGEN_IMG[m.type + m.mutagen];
         var imgCls = m.type === '对宫化' ? 'mutagen-img duigong-img' : 'mutagen-img zihua-img';
-        html += imgSrc ? '<img class="' + imgCls + '" src="' + imgSrc + '" alt="">' : '';
+        html += imgSrc ? '<img class="' + imgCls + '" data-term="' + m.type + '" src="' + imgSrc + '" alt="">' : '';
       } else {
         html += '<span class="mutagen-pill ' + cls + '">' + m.type + m.mutagen + '</span>';
       }

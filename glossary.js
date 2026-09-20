@@ -257,9 +257,9 @@ function refreshGather() {
       var p = el.parentNode;
       if (p) p.replaceChild(document.createTextNode(el.textContent), el);
     } else {
-      // 结构标注（原有元素上加了 .term，如 .cell.gan）：只移除类与标记，保留元素
+      // 结构标注 / 图片词条（.term 加在原有元素上）：只移除 .term，保留元素与 data-term
+      // （图片的 data-term 是 HTML 硬编码的，不能清掉，否则下次打不开）
       el.classList.remove('term');
-      el.removeAttribute('data-term');
     }
   });
   if (!GATHER_MODE) return;
@@ -288,6 +288,7 @@ function refreshGather() {
     var t = el.textContent.trim();
     tag(el, t.length ? t[t.length - 1] : '');
   });
+  document.querySelectorAll('.mutagen-img[data-term]').forEach(function (el) { tag(el, el.getAttribute('data-term')); }); // 对宫化/自化
 
   // 3. 批注 / 题目文字：字典最长匹配扫描
   document.querySelectorAll('.batch-text, .quiz-q-topic, .quiz-opt').forEach(function (root) {

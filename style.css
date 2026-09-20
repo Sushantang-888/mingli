@@ -255,6 +255,12 @@ body {
   text-decoration-thickness: 1.5px;
   text-underline-offset: 3px;
 }
+/* 图片类词条（对宫化/自化）高亮：描边 */
+img.term {
+  outline: 2px solid rgba(11, 0, 96, 0.35);
+  outline-offset: 1px;
+  border-radius: 4px;
+}
 /* 释义卡 */
 .gather-popup {
   position: fixed;
