@@ -1441,6 +1441,7 @@ function jumpToYear(year) {
   renderCurYun();
   requestAnimationFrame(function () { requestAnimationFrame(renderBaziRelations); });
   if (typeof ziweiJumpToYear === 'function') ziweiJumpToYear(year);  // 紫微同步切流年
+  showToast('填入成功');   // 成功选中该年，屏幕中央提示
 }
 
 function renderQuizQuestions(chart) {
