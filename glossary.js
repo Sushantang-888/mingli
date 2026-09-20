@@ -355,6 +355,27 @@ var GLOSSARY = {
   '自化': { category: '四化关系', definition: '本宫宫干四化落本宫星曜，主自身之变化。' }
 };
 
+/* 六十甲子：天干坐地支 + 生克（不取纳音，用户认为纳音无推断意义） */
+(function () {
+  var GAN_WUXING = { '甲':'木','乙':'木','丙':'火','丁':'火','戊':'土','己':'土','庚':'金','辛':'金','壬':'水','癸':'水' };
+  var ZHI_WUXING = { '子':'水','丑':'土','寅':'木','卯':'木','辰':'土','巳':'火','午':'火','未':'土','申':'金','酉':'金','戌':'土','亥':'水' };
+  var KE = { '木':'土','土':'水','水':'火','火':'金','金':'木' };
+  var SHENG = { '木':'火','火':'土','土':'金','金':'水','水':'木' };
+  var GAN_LIST = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+  var ZHI_LIST = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+  for (var g = 0; g < 60; g++) {
+    var gan = GAN_LIST[g % 10], zhi = ZHI_LIST[g % 12];
+    var gw = GAN_WUXING[gan], zw = ZHI_WUXING[zhi];
+    var rel = '';
+    if (gw === zw) rel = '，' + gw + zw + '同气';
+    else if (KE[gw] === zw) rel = '，' + gw + '克' + zw + '（干克支）';
+    else if (KE[zw] === gw) rel = '，' + zw + '克' + gw + '（支克干）';
+    else if (SHENG[gw] === zw) rel = '，' + gw + '生' + zw + '（干生支）';
+    else rel = '，' + zw + '生' + gw + '（支生干）';
+    GLOSSARY[gan + zhi] = { category: '六十甲子', definition: gan + '（' + gw + '）坐' + zhi + '（' + zw + '）' + rel + '。' };
+  }
+})();
+
 /* 十神简称 → 全称（排盘表用简称：比/劫/食/伤/才/财/杀/官/枭/印） */
 var SHI_SHEN_FULL = {
   '比': '比肩', '劫': '劫财', '食': '食神', '伤': '伤官', '才': '偏财',
@@ -400,14 +421,22 @@ function refreshGather() {
   }
 
   // 1. 排盘表结构标注（八字）
-  // 天干/地支 → 优先指向所在柱的整体六十甲子（如「辛卯」），否则退回单个字
-  function gzOf(el) {
+  // 天干/地支：data-term=单个字（辛/卯），data-pillar=柱干支（辛卯），弹卡两者都显示
+  function pillarOf(el) {
     var col = el.closest('.col-pillar');
     var gz = col ? col.getAttribute('data-gz') : null;
-    return (gz && GLOSSARY[gz]) ? gz : el.textContent.trim();
+    return (gz && GLOSSARY[gz]) ? gz : null;
   }
-  document.querySelectorAll('.cell.gan').forEach(function (el) { tag(el, gzOf(el)); });          // 天干→柱
-  document.querySelectorAll('.zhi-char').forEach(function (el) { tag(el, gzOf(el)); });          // 地支→柱
+  document.querySelectorAll('.cell.gan').forEach(function (el) {
+    tag(el, el.textContent.trim());
+    var gz = pillarOf(el);
+    if (gz) el.setAttribute('data-pillar', gz);
+  });
+  document.querySelectorAll('.zhi-char').forEach(function (el) {
+    tag(el, el.textContent.trim());
+    var gz = pillarOf(el);
+    if (gz) el.setAttribute('data-pillar', gz);
+  });
   document.querySelectorAll('.cell.ss').forEach(function (el) { tag(el, SHI_SHEN_FULL[el.textContent.trim()]); }); // 十神
   document.querySelectorAll('.shensha span').forEach(function (el) { tag(el, el.textContent.trim()); });      // 神煞
   document.querySelectorAll('.zhi-mark.kong').forEach(function (el) { tag(el, '空亡'); });                     // 空亡
@@ -515,10 +544,16 @@ function showGatherPopup(termEl) {
       return '<span class="gp-related-item" onclick="showGatherPopupByKey(\'' + r + '\')">' + r + '</span>';
     }).join('') + '</div>';
   }
+  var pillarKey = termEl.getAttribute('data-pillar');
+  var pillarHtml = '';
+  if (pillarKey && GLOSSARY[pillarKey]) {
+    pillarHtml = '<div class="gp-pillar"><span class="gp-pillar-title">' + pillarKey + '柱</span>' + GLOSSARY[pillarKey].definition + '</div>';
+  }
   pop.innerHTML =
     '<div class="gp-head"><span class="gp-title">' + key + '</span><span class="gp-cat">' + g.category + '</span></div>' +
     '<div class="gp-pinyin">' + (g.pinyin || '') + '</div>' +
     '<div class="gp-def">' + g.definition + '</div>' +
+    pillarHtml +
     '<div class="gp-cites">' + citeHtml + '</div>' +
     relatedHtml +
     '<button class="gp-close" onclick="hideGatherPopup()">×</button>';

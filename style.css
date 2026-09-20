@@ -295,6 +295,8 @@ img.term {
 .gather-popup .gp-cat { font-size: 12px; color: #fff; background: #0b0060; padding: 1px 8px; border-radius: 100px; }
 .gather-popup .gp-pinyin { font-size: 13px; color: #999; margin-bottom: 8px; }
 .gather-popup .gp-def { font-size: 15px; color: #333; margin-bottom: 10px; }
+.gather-popup .gp-pillar { margin: 8px 0; padding: 8px 10px; background: #f4f1ea; border-radius: 6px; font-size: 14px; color: #333; line-height: 1.6; }
+.gather-popup .gp-pillar-title { color: #0b0060; font-weight: 600; margin-right: 6px; }
 .gather-popup .gp-cites { border-top: 1px solid #eee; padding-top: 8px; }
 .gather-popup .gp-cite { margin-bottom: 6px; }
 .gather-popup .gp-cite-book { display: block; font-size: 13px; color: #0b0060; font-weight: 600; }
