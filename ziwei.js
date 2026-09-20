@@ -396,6 +396,17 @@ function fitBoard() {
   grid.style.transform = 'scale(' + scale + ')';
 }
 
+/* 紫微 tab 显示时重排：页面默认 tab 是八字，ziweiPaipan 在 #ziwei-board display:none 下跑，
+ * fitStars/fitMutagens 的 getBoundingClientRect 全 0（四化胶囊 left:-28px 错位）。
+ * 切回紫微后需重跑一遍（同八字弧线 baziRelayoutArcs 的坑）。 */
+function ziweiRelayout() {
+  fitBoard();
+  document.querySelectorAll('.palace').forEach(function (cell) {
+    fitStars(cell);
+    fitMutagens(cell);
+  });
+}
+
 /* 星曜不换行：主星固定，小星（杂星/辅星）按需缩到 20~32px 保证不换行 */
 function fitStars(cell) {
   var bottom = cell.querySelector('.palace-bottom');
@@ -433,11 +444,11 @@ function fitStars(cell) {
   });
   if (totalWidth() <= avail) return;
 
-  // 3. 辅星缩到 20px，重要辅助星（昌曲辅弼魁钺马）跳过
+  // 3. 辅星缩到 20px（下限），亮度也保持 18px 下限（不再缩到 14px）
   bottom.querySelectorAll('.star-minor').forEach(function (s) {
     if (isKeyMinor(s)) return;
     var n = s.querySelector('.star-name'); if (n) n.style.fontSize = '20px';
-    var b = s.querySelector('.brightness'); if (b) b.style.fontSize = '14px';
+    var b = s.querySelector('.brightness'); if (b) b.style.fontSize = '18px';
   });
   if (totalWidth() <= avail) return;
 

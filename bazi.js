@@ -305,6 +305,9 @@ function renderChart(data) {
   renderCurYun();
   renderBatchNote();
 
+  // 排盘表缩放（手机原局 scale-to-fit 完整展示）
+  fitBaziChart();
+
   // 刑冲破害合标记（胶囊 + 箭头，跨柱连线）
   // 延迟两帧，确保 renderPillar 重建后的布局已完全稳定（否则位置会偏移）
   requestAnimationFrame(function () {
@@ -330,9 +333,28 @@ function applyBaziViewMode(mode) {
 function switchBaziView(mode) {
   applyBaziViewMode(mode);
   renderCurYun();
+  if (mode === 'liunian' && window.innerWidth < 768) {
+    showToast('即将横屏展开');
+  }
+  fitBaziChart();
   requestAnimationFrame(function () {
     requestAnimationFrame(renderBaziRelations);
   });
+}
+
+/* toast 提示（自动消失） */
+function showToast(msg) {
+  var t = document.getElementById('bazi-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'bazi-toast';
+    t.className = 'bazi-toast';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(function () { t.classList.remove('show'); }, 1800);
 }
 
 /* 清除大运/流年 vs 原盘的关系标记（弧线 + 胶囊） */
@@ -345,11 +367,65 @@ function clearYunRelations() {
   ).forEach(function (el) { el.remove(); });
 }
 
+/* 排盘表缩放：手机原局 → scale-to-fit 完整展示；手机流年大运 → 横屏旋转；否则清除 */
+function fitBaziChart() {
+  var wrap = document.getElementById('chart-scale-wrap');
+  var chart = wrap ? wrap.querySelector('.chart') : null;
+  if (!wrap || !chart) return;
+  var mobile = window.innerWidth < 768;
+  var isLandscape = mobile && BAZI_VIEW_MODE === 'liunian';
+
+  if (!mobile) {
+    wrap.classList.remove('landscape');
+    chart.style.transform = '';
+    wrap.style.width = '';
+    wrap.style.height = '';
+    return;
+  }
+
+  // 测量列的自然包围盒（先移除横屏 class + 清 chart transform，getBoundingClientRect 得布局坐标）
+  wrap.classList.remove('landscape');
+  chart.style.transform = '';
+  var cols = chart.querySelectorAll('.col');
+  var minX = Infinity, maxX = -Infinity;
+  cols.forEach(function (c) {
+    var r = c.getBoundingClientRect();
+    if (r.left < minX) minX = r.left;
+    if (r.right > maxX) maxX = r.right;
+  });
+  if (minX === Infinity) return;
+  var padL = parseFloat(getComputedStyle(chart).paddingLeft) || 0;
+  var padR = parseFloat(getComputedStyle(chart).paddingRight) || 0;
+  var contentW = (maxX - minX) + padL + padR;
+  var contentH = chart.scrollHeight;
+  var avail = isLandscape ? window.innerHeight : (wrap.clientWidth || 358);
+  var scale = Math.min(1, avail / contentW);
+
+  // transform 作用在 chart 上（同紫微 fitBoard）；横屏时 wrapper 由 CSS 定 fullscreen
+  chart.style.transform = 'scale(' + scale + ')';
+  if (isLandscape) {
+    wrap.style.width = '';
+    wrap.style.height = '';
+    wrap.classList.add('landscape');
+  } else {
+    wrap.style.width = (contentW * scale) + 'px';
+    wrap.style.height = (contentH * scale) + 'px';
+  }
+}
+
 /* 按视图模式渲染关系：
  * 原局模式只画四柱内部的刑冲破害合 + 天干五合；
- * 流年大运模式再叠加大运/流年 vs 原盘的关系。 */
+ * 流年大运模式再叠加大运/流年 vs 原盘的关系。
+ * 测量弧线时临时清除 chart transform（缩放/旋转），用布局坐标定位，
+ * 弧线作为盘内子元素会随盘一起缩放/旋转，自动对齐。 */
 function renderBaziRelations() {
   if (!CURRENT_DATA) return;
+  var wrap = document.getElementById('chart-scale-wrap');
+  var chart = document.querySelector('#bazi-board .chart');
+  var saved = chart ? chart.style.transform : '';
+  var wasLandscape = wrap ? wrap.classList.contains('landscape') : false;
+  if (wrap) wrap.classList.remove('landscape');
+  if (chart) chart.style.transform = '';
   renderXingChong(CURRENT_DATA.xingChong);
   renderGanHe(CURRENT_DATA.ganHe);
   if (BAZI_VIEW_MODE === 'liunian') {
@@ -357,6 +433,8 @@ function renderBaziRelations() {
   } else {
     clearYunRelations();
   }
+  if (chart) chart.style.transform = saved;
+  if (wrap && wasLandscape) wrap.classList.add('landscape');
 }
 
 /* 渲染当前大运/流年/流月三列 */
@@ -392,10 +470,17 @@ function renderAllYunRelations() {
 /* 八字 tab 显示时重算弧线：排盘时若八字盘 display:none，getBoundingClientRect 全 0，需切回后重定位 */
 function baziRelayoutArcs() {
   if (!CURRENT_DATA) return;
+  fitBaziChart();
   requestAnimationFrame(function () {
     requestAnimationFrame(renderBaziRelations);
   });
 }
+
+/* 窗口尺寸变化：重新缩放排盘表 + 重算弧线 */
+window.addEventListener('resize', function () {
+  fitBaziChart();
+  baziRelayoutArcs();
+});
 
 /* 柱顺序索引（用于计算相隔柱数 → 弧线高度分档） */
 var COL_INDEX = { year: 0, month: 1, day: 2, time: 3, dayun: 4, liunian: 5 };
@@ -985,6 +1070,28 @@ function fillCityList() {
   dl.innerHTML = html;
 }
 
+/* 输入区汇总行（手机版）：把 6 个输入框的内容汇总成一行 */
+function updateInputSummary() {
+  var el = document.getElementById('input-summary-text');
+  if (!el) return;
+  var y = document.getElementById('in-year').value;
+  var mo = document.getElementById('in-month').value;
+  var d = document.getElementById('in-day').value;
+  var h = document.getElementById('in-hour').value;
+  var mi = document.getElementById('in-minute').value;
+  var city = document.getElementById('in-city').value;
+  var g = document.getElementById('in-gender').value;
+  var gender = (g === '1') ? '乾造' : '坤造';
+  var mm = (mi.length === 1) ? '0' + mi : mi;
+  el.textContent = y + '年' + mo + '月' + d + '日 ' + h + ':' + mm + ' · ' + city + ' · ' + gender;
+}
+
+/* 手机版：点汇总行展开/折叠输入框 */
+function toggleInputEdit() {
+  var p = document.getElementById('input-panel');
+  if (p) p.classList.toggle('editing');
+}
+
 /* 页面加载后，填充城市列表并先排一个示例 */
 window.addEventListener('DOMContentLoaded', function () {
   fillCityList();
@@ -992,6 +1099,12 @@ window.addEventListener('DOMContentLoaded', function () {
   baziPaipan();
   renderChartList();
   refreshSupabaseUser();
+  // 输入区汇总行：绑定输入变化监听 + 初始显示
+  ['in-year', 'in-month', 'in-day', 'in-hour', 'in-minute', 'in-city', 'in-gender'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', updateInputSummary);
+  });
+  updateInputSummary();
 });
 
 /* 点击 dropdown 之外的区域关闭面板 */
@@ -1260,6 +1373,7 @@ function applyChart(chart) {
   document.getElementById('in-minute').value = chart.minute;
   document.getElementById('in-gender').value = chart.gender;
   document.getElementById('in-city').value = chart.city;
+  updateInputSummary();
   baziPaipan();
   if (typeof ziweiPaipan === 'function') ziweiPaipan();  // 紫微跟着排
   renderQuizQuestions(chart);

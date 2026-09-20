@@ -84,6 +84,52 @@ body {
 }
 .input-panel button:hover { background: #1a1490; }
 
+/* 输入区汇总行：桌面隐藏，手机版显示「一行字 + 编辑 icon」 */
+.input-summary {
+  display: none;
+}
+
+/* 手机版输入区：汇总行 + 折叠输入框 + 按钮缩放 */
+@media (max-width: 768px) {
+  .input-panel {
+    padding: 14px 16px;
+    gap: 12px;
+  }
+  .input-summary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-basis: 100%;
+    cursor: pointer;
+    font-size: 20px;
+    color: #1a1a1a;
+    line-height: 1.3;
+  }
+  .input-summary-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .input-edit-icon {
+    font-size: 22px;
+    color: #0b0060;
+    flex-shrink: 0;
+  }
+  /* 折叠时隐藏 6 个输入框，点编辑 icon 展开 */
+  .input-panel:not(.editing) > label {
+    display: none;
+  }
+  .input-panel.editing > label {
+    display: flex;
+  }
+  /* 4 个按钮随屏幕缩放：最小字号 20px、内间距左右 20px / 上下 8px */
+  .input-panel button {
+    font-size: 20px;
+    padding: 8px 20px;
+  }
+}
+
 /* ---------- 排盘表卡片 ---------- */
 .chart-card {
   background: #fff;
@@ -125,7 +171,51 @@ body {
   width: max-content;
   min-width: 100%;
   padding: 0 80px;
+  transform-origin: top left;
 }
+
+/* 排盘表缩放包裹层：缩放/旋转都作用在这层；弧线测量时临时清除其 transform 用布局坐标 */
+.chart-scale-wrap {
+  position: relative;
+  overflow: hidden;
+  margin: 0 auto;
+  transform-origin: top left;
+}
+
+/* 手机「流年大运」：强制横屏展示（旋转 90° + 全屏，用户横拿手机看） */
+.chart-scale-wrap.landscape {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vh;
+  height: 100vw;
+  margin: 0;
+  transform: translateX(100vw) rotate(90deg);
+  transform-origin: top left;
+  overflow: auto;
+  z-index: 200;
+  background: #f2efe8;
+}
+
+/* toast 提示 */
+.bazi-toast {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.82);
+  color: #fff;
+  padding: 14px 24px;
+  border-radius: 8px;
+  font-size: 18px;
+  line-height: 1.4;
+  z-index: 999;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s;
+  white-space: nowrap;
+}
+.bazi-toast.show { opacity: 1; }
 
 /* 通用列 */
 .col {
@@ -447,7 +537,7 @@ body {
 .quiz-copy-btn:hover { background: #f5f5f5; }
 .quiz-q {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: 1fr;
   align-items: stretch;
   gap: 16px;
   margin-bottom: 20px;
@@ -506,10 +596,9 @@ body {
 
 /* ============ 移动端适配（手机竖屏） ============ */
 @media (max-width: 768px) {
-  /* 排盘表横向滑动（保持桌面尺寸，手机左右滑看） */
+  /* 排盘表：手机不横滑，改缩放（由 fitBaziChart 控制包裹层） */
   .chart-card {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow-x: hidden;
   }
   /* 大赛命例：左右两栏改上下堆叠 */
   .quiz-layout.is-quiz {
@@ -616,9 +705,9 @@ body {
   display: flex;
   align-items: flex-end;
   gap: 4px;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   margin-top: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 /* 主星：亮度 + 星名（竖排） */
 .star-major {
