@@ -133,6 +133,7 @@ body {
 
 /* ---------- 排盘面板（白色大卡片：含八字/紫微 Tab + 排盘内容） ---------- */
 .board-slot {
+  position: relative;
   background: #fff;
   border-radius: 10px;
   box-shadow: 0 2px 16px rgba(0,0,0,0.06);
@@ -228,19 +229,19 @@ body {
 
 /* ===== 拾词模式 ===== */
 .gather-toggle {
-  position: fixed;
+  position: absolute;
+  top: 16px;
   right: 16px;
-  bottom: 16px;
   z-index: 300;
-  font-size: 15px;
-  padding: 10px 18px;
+  font-size: 14px;
+  padding: 7px 14px;
   border: 1px solid #ccc;
   border-radius: 100px;
   background: #fff;
-  color: #666;
+  color: #555;
   cursor: pointer;
   font-family: inherit;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+  box-shadow: 0 1px 6px rgba(0,0,0,0.12);
 }
 .gather-toggle.on {
   background: #0b0060;

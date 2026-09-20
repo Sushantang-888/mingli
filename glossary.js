@@ -91,17 +91,84 @@ var GLOSSARY = {
     related: ['偏印']
   },
 
-  /* ---------- 十天干 ---------- */
-  '甲': { category: '天干', definition: '阳木，东方，色青，主仁、正直、栋梁之材。' },
-  '乙': { category: '天干', definition: '阴木，花草藤蔓，主柔韧、生发、曲直。' },
-  '丙': { category: '天干', definition: '阳火，太阳，主光明、热烈、普照万物。' },
-  '丁': { category: '天干', definition: '阴火，灯烛之火，主柔和、文明、细腻。' },
-  '戊': { category: '天干', definition: '阳土，城墙之土，主厚重、稳重、承载。' },
-  '己': { category: '天干', definition: '阴土，田园之土，主包容、滋养、含蓄。' },
-  '庚': { category: '天干', definition: '阳金，刀剑钢铁，主刚强、肃杀、变革。' },
-  '辛': { category: '天干', definition: '阴金，珠玉之金，主精致、清贵、修饰。' },
-  '壬': { category: '天干', definition: '阳水，江河大海，主流动、智慧、奔放。' },
-  '癸': { category: '天干', definition: '阴水，雨露之水，主滋润、含蓄、细腻。' },
+  /* ---------- 十天干（滴天髓原文 + 穷通宝鉴调候） ---------- */
+  '甲': { category: '天干', definition: '阳木，东方，色青，主仁、正直、栋梁。',
+    citations: [
+      { book: '《滴天髓》', chapter: '天干论', text: '甲木参天，脱胎要火。春不容金，秋不容土。火炽乘龙，水宕骑虎。地润天和，植立千古。' },
+      { book: '《穷通宝鉴》', chapter: '调候', text: '甲木调候，以庚金劈甲、丁火吐秀为要。' }
+    ] },
+  '乙': { category: '天干', definition: '阴木，花草藤蔓，主柔韧、生发、曲直。',
+    citations: [
+      { book: '《滴天髓》', chapter: '天干论', text: '乙木虽柔，刲羊解牛。怀丁抱丙，跨凤乘猴。虚湿之地，骑马亦忧。藤萝系甲，可春可秋。' },
+      { book: '《穷通宝鉴》', chapter: '调候', text: '乙木调候，以丙火照暖、癸水滋润为要。' }
+    ] },
+  '丙': { category: '天干', definition: '阳火，太阳，主光明、热烈、普照。',
+    citations: [
+      { book: '《滴天髓》', chapter: '天干论', text: '丙火猛烈，欺霜侮雪。能煅庚金，逢辛反怯。土众成慈，水猖显节。虎马犬乡，甲来成灭。' },
+      { book: '《穷通宝鉴》', chapter: '调候', text: '丙火为太阳，调候以壬水为尊（太阳之火，需壬水相济，方能普照万物、水火既济）。' }
+    ] },
+  '丁': { category: '天干', definition: '阴火，灯烛之火，主柔和、文明、细腻。',
+    citations: [
+      { book: '《滴天髓》', chapter: '天干论', text: '丁火柔中，内性昭融。抱乙而孝，合壬而忠。旺而不烈，衰而不穷。如有嫡母，可秋可冬。' },
+      { book: '《穷通宝鉴》', chapter: '调候', text: '丁火调候，以甲木引丁、庚金劈甲为要。' }
+    ] },
+  '戊': { category: '天干', definition: '阳土，城墙之土，主厚重、稳重、承载。',
+    citations: [
+      { book: '《滴天髓》', chapter: '天干论', text: '戊土固重，既中且正。静翕动辟，万物司命。水润物生，火燥物病。若在艮坤，怕冲宜静。' },
+      { book: '《穷通宝鉴》', chapter: '调候', text: '戊土调候，以甲木疏土、丙火照暖、癸水滋润为要。' }
+    ] },
+  '己': { category: '天干', definition: '阴土，田园之土，主包容、滋养、含蓄。',
+    citations: [
+      { book: '《滴天髓》', chapter: '天干论', text: '己土卑湿，中正蓄藏。不愁木盛，不畏水狂。火少火晦，金多金光。若要物旺，宜助宜帮。' },
+      { book: '《穷通宝鉴》', chapter: '调候', text: '己土调候，以丙火照暖、癸水滋润为要。' }
+    ] },
+  '庚': { category: '天干', definition: '阳金，刀剑钢铁，主刚强、肃杀、变革。',
+    citations: [
+      { book: '《滴天髓》', chapter: '天干论', text: '庚金带煞，刚健为最。得水而清，得火而锐。土润则生，土干则脆。能赢甲兄，输于乙妹。' },
+      { book: '《穷通宝鉴》', chapter: '调候', text: '庚金调候，以丁火锻炼、甲木引丁为要。' }
+    ] },
+  '辛': { category: '天干', definition: '阴金，珠玉之金，主精致、清贵、修饰。',
+    citations: [
+      { book: '《滴天髓》', chapter: '天干论', text: '辛金软弱，温润而清。畏土之叠，乐水之盈。能扶社稷，能救生灵。热则喜母，寒则喜丁。' },
+      { book: '《穷通宝鉴》', chapter: '调候', text: '辛金调候，以壬水淘洗为要（珠玉需水洗）。' }
+    ] },
+  '壬': { category: '天干', definition: '阳水，江河大海，主流动、智慧、奔放。',
+    citations: [
+      { book: '《滴天髓》', chapter: '天干论', text: '壬水通河，能泄金气。刚中之德，周流不滞。通根透癸，冲天奔地。化则有情，从则相济。' },
+      { book: '《穷通宝鉴》', chapter: '调候', text: '壬水调候，以戊土为堤防、庚金发源为要。' }
+    ] },
+  '癸': { category: '天干', definition: '阴水，雨露之水，主滋润、含蓄、细腻。',
+    citations: [
+      { book: '《滴天髓》', chapter: '天干论', text: '癸水至弱，达于天津。得龙而运，功化斯神。不愁火土，不论庚辛。合戊见火，化象斯真。' },
+      { book: '《穷通宝鉴》', chapter: '调候', text: '癸水调候，以庚辛金发源为要。' }
+    ] },
+
+  /* ---------- 格局 ---------- */
+  '月劫格': { category: '格局', definition: '月令为劫财者，称月劫格（阳刃格之变），主刚烈、竞争。' },
+  '建禄格': { category: '格局', definition: '月令为日主之禄（比肩）者，称建禄格，主自立。' },
+  '阳刃格': { category: '格局', definition: '月令为日主羊刃（劫财）者，称阳刃格，主刚烈、武职。' },
+  '食神格': { category: '格局', definition: '月令食神，为食神格，主才华、口福、福气。' },
+  '伤官格': { category: '格局', definition: '月令伤官，为伤官格，主才华、叛逆、口舌。' },
+  '正官格': { category: '格局', definition: '月令正官，为正官格，主贵气、名誉、约束。' },
+  '七杀格': { category: '格局', definition: '月令七杀，为七杀格，主威权、魄力、凶险。' },
+  '正财格': { category: '格局', definition: '月令正财，为正财格，主正当之财、勤俭。' },
+  '偏财格': { category: '格局', definition: '月令偏财，为偏财格，主横财、慷慨、经营。' },
+  '正印格': { category: '格局', definition: '月令正印，为正印格，主学业、庇护、名誉。' },
+  '偏印格': { category: '格局', definition: '月令偏印，为偏印格，主偏门学识、灵感。' },
+
+  /* ---------- 八字俗语 ---------- */
+  '食神泄秀': { category: '俗语', definition: '食神泄日主之秀气，主才华外露、聪明灵秀、技艺。' },
+  '伤官佩印': { category: '俗语', definition: '伤官配正印，才华有制约、有学识，主成名。' },
+  '杀印相生': { category: '俗语', definition: '七杀生印、印生身，化杀为权，主贵。' },
+  '食神制杀': { category: '俗语', definition: '食神制七杀，以柔克刚，化杀为权。' },
+  '羊刃驾杀': { category: '俗语', definition: '羊刃与七杀并见，以杀制刃、以刃帮身，主武职、权柄。' },
+  '财多身弱': { category: '俗语', definition: '财星过旺、日主身弱不能任财，富屋贫人。' },
+  '身强财旺': { category: '俗语', definition: '身强财旺、能任财，主富。' },
+  '印绶护身': { category: '俗语', definition: '印星护日主，主庇护、逢凶化吉。' },
+  '官印相生': { category: '俗语', definition: '官生印、印生身，官印相生，主贵气。' },
+  '财官双美': { category: '俗语', definition: '财官两旺，富贵双全。' },
+  '食神生财': { category: '俗语', definition: '食神生财，财源有继，主富。' },
+  '伤官见官': { category: '俗语', definition: '伤官见官，为祸百端（忌），主官非、口舌。' },
 
   /* ---------- 十二地支 ---------- */
   '子': { category: '地支', definition: '阳水，生肖鼠，子时（23–1 点），藏干癸。' },
@@ -312,28 +379,32 @@ function annotateText(root) {
   textNodes.forEach(function (node) { wrapTerms(node, terms); });
 }
 
-/* 最长匹配：把 textNode 里出现的词条逐个包成 span.term */
+/* 最长匹配：逐字定位，每个位置取最长的词条，包成 span.term */
 function wrapTerms(textNode, terms) {
   var text = textNode.nodeValue;
   var frag = document.createDocumentFragment();
-  var remaining = text;
+  var i = 0;
   var matched = false;
-  while (remaining.length) {
-    var best = null, bestIdx = -1, bestLen = 0;
-    terms.forEach(function (term) {
-      var idx = remaining.indexOf(term);
-      if (idx >= 0 && term.length > bestLen) { best = term; bestIdx = idx; bestLen = term.length; }
-    });
-    if (!best) { frag.appendChild(document.createTextNode(remaining)); break; }
-    matched = true;
-    if (bestIdx > 0) frag.appendChild(document.createTextNode(remaining.slice(0, bestIdx)));
-    var span = document.createElement('span');
-    span.className = 'term';
-    span.setAttribute('data-term', best);
-    span.textContent = best;
-    frag.appendChild(span);
-    remaining = remaining.slice(bestIdx + best.length);
+  while (i < text.length) {
+    var best = null;
+    for (var t = 0; t < terms.length; t++) {
+      if (text.substr(i, terms[t].length) === terms[t]) { best = terms[t]; break; }  // terms 按长度降序，第一个命中即最长
+    }
+    if (best) {
+      matched = true;
+      if (i > 0) frag.appendChild(document.createTextNode(text.slice(0, i)));
+      var span = document.createElement('span');
+      span.className = 'term';
+      span.setAttribute('data-term', best);
+      span.textContent = best;
+      frag.appendChild(span);
+      text = text.slice(i + best.length);
+      i = 0;
+    } else {
+      i++;
+    }
   }
+  if (i > 0) frag.appendChild(document.createTextNode(text));
   if (matched) textNode.parentNode.replaceChild(frag, textNode);
 }
 
