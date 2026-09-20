@@ -307,6 +307,7 @@ function renderChart(data) {
   // 当前大运 / 流年 / 流月（各一列，顶带左右箭头）
   renderCurYun();
   renderBatchNote();
+  refreshGather();
 
   // 排盘表缩放（手机原局 scale-to-fit 完整展示）
   fitBaziChart();
@@ -1421,6 +1422,7 @@ function applyChart(chart) {
   baziPaipan();
   if (typeof ziweiPaipan === 'function') ziweiPaipan();  // 紫微跟着排
   renderQuizQuestions(chart);
+  refreshGather();
   // 登录状态下，异步从云端拉取该命例批注并合并回填
   if (chart.isQuiz) {
     loadQuizNotesFromCloud(chart.name).then(function (cloudNotes) {

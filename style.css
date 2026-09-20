@@ -218,6 +218,61 @@ body {
 }
 .bazi-toast.show { opacity: 1; }
 
+/* ===== 拾词模式 ===== */
+.gather-toggle {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 300;
+  font-size: 15px;
+  padding: 10px 18px;
+  border: 1px solid #ccc;
+  border-radius: 100px;
+  background: #fff;
+  color: #666;
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+}
+.gather-toggle.on {
+  background: #0b0060;
+  color: #fff;
+  border-color: #0b0060;
+}
+/* 词条高亮：只加下划线，不改字色（避免破坏五行配色） */
+.term {
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-decoration-color: #0b0060;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+}
+/* 释义卡 */
+.gather-popup {
+  position: fixed;
+  z-index: 400;
+  width: 300px;
+  max-width: calc(100vw - 20px);
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.22);
+  padding: 16px 18px;
+  font-family: 'FZShengShiKaiShuS-B-GB', 'STKaiti', 'KaiTi', serif;
+  line-height: 1.6;
+}
+.gather-popup .gp-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 2px; }
+.gather-popup .gp-title { font-size: 22px; font-weight: 600; color: #1a1a1a; }
+.gather-popup .gp-cat { font-size: 12px; color: #fff; background: #0b0060; padding: 1px 8px; border-radius: 100px; }
+.gather-popup .gp-pinyin { font-size: 13px; color: #999; margin-bottom: 8px; }
+.gather-popup .gp-def { font-size: 15px; color: #333; margin-bottom: 10px; }
+.gather-popup .gp-cites { border-top: 1px solid #eee; padding-top: 8px; }
+.gather-popup .gp-cite { margin-bottom: 6px; }
+.gather-popup .gp-cite-book { display: block; font-size: 13px; color: #0b0060; font-weight: 600; }
+.gather-popup .gp-cite-text { font-size: 14px; color: #555; }
+.gather-popup .gp-related { margin-top: 8px; font-size: 13px; color: #888; }
+.gather-popup .gp-related-item { color: #0b0060; cursor: pointer; text-decoration: underline; margin-right: 6px; }
+.gather-popup .gp-close { position: absolute; top: 8px; right: 10px; border: none; background: transparent; font-size: 20px; color: #bbb; cursor: pointer; line-height: 1; }
+
 /* 通用列 */
 .col {
   display: flex;
