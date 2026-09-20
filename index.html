@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>命理排盘 · 八字 + 紫微</title>
-  <link rel="stylesheet" href="style.css?v=13">
+  <link rel="stylesheet" href="style.css?v=14">
 </head>
 <body>
   <div class="page">
@@ -61,8 +61,9 @@
       <div id="chart-list"></div>
     </div>
 
-    <!-- 排盘区（tab 切换）+ 大赛题目（一直在右侧） -->
-    <div class="quiz-layout" id="quiz-layout">
+    <!-- 排盘 + 题目/批注（大屏左右，小屏上下） -->
+    <div class="content-layout" id="content-layout">
+      <div class="quiz-layout" id="quiz-layout">
       <div class="board-slot">
         <!-- 八字/紫微 Tab（排盘面板内，一级切换） -->
         <div class="tab-bar">
@@ -74,6 +75,7 @@
           <div class="bazi-view-switch">
             <button class="view-btn active" data-view="yuanju" onclick="switchBaziView('yuanju')">原局</button>
             <button class="view-btn" data-view="liunian" onclick="switchBaziView('liunian')">流年大运</button>
+            <button class="view-btn" data-view="today" onclick="goToday()">当前年月</button>
           </div>
           <div class="chart-scale-wrap" id="chart-scale-wrap">
             <div class="chart">
@@ -93,8 +95,9 @@
       <div class="quiz-questions" id="quiz-questions"></div>
     </div>
 
-    <!-- 批注（一直在，不随 tab 消失） -->
-    <div class="batch-note" id="batch-note"></div>
+      <!-- 批注（一直在，不随 tab 消失） -->
+      <div class="batch-note" id="batch-note"></div>
+    </div>
 
   </div>
 
@@ -104,8 +107,8 @@
   <script src="shensha.js"></script>
   <script src="quiz-bank.js"></script>
   <script src="iztro.min.js"></script>
-  <script src="glossary.js"></script>
-  <script src="bazi.js?v=12"></script>
+  <script src="glossary.js?v=2"></script>
+  <script src="bazi.js?v=13"></script>
   <script src="ziwei.js?v=7"></script>
   <button id="gather-toggle" class="gather-toggle" onclick="toggleGatherMode()">拾词</button>
 

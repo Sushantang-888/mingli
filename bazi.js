@@ -223,7 +223,10 @@ function calcBazi(year, month, day, hour, minute, gender) {
     daYunList: daYunList,                   // 大运列表（嵌套流年流月）
     curDaYunIdx: curDaYunIdx,               // 当前大运索引
     curLiuNianIdx: curLiuNianIdx,           // 当前流年索引
-    curLiuYueIdx: curLiuYueIdx              // 当前流月索引
+    curLiuYueIdx: curLiuYueIdx,             // 当前流月索引
+    todayDaYunIdx: curDaYunIdx,             // 今天的大运索引（「当前年月」用）
+    todayLiuNianIdx: curLiuNianIdx,         // 今天的流年索引
+    todayLiuYueIdx: curLiuYueIdx            // 今天的流月索引
   };
 }
 
@@ -341,6 +344,23 @@ function switchBaziView(mode) {
   if (window.innerWidth < 768) {
     showToast(mode === 'liunian' ? '即将翻转横屏' : '即将转回竖屏');
   }
+  fitBaziChart();
+  requestAnimationFrame(function () {
+    requestAnimationFrame(renderBaziRelations);
+  });
+}
+
+/* 「当前年月」：切到流年大运 + 选中今天的大运/流年/流月 */
+function goToday() {
+  if (!CURRENT_DATA) return;
+  applyBaziViewMode('liunian');
+  CURRENT_DATA.curDaYunIdx = CURRENT_DATA.todayDaYunIdx;
+  CURRENT_DATA.curLiuNianIdx = CURRENT_DATA.todayLiuNianIdx;
+  CURRENT_DATA.curLiuYueIdx = CURRENT_DATA.todayLiuYueIdx;
+  closeYunDropdown();
+  applyRelSpace();
+  renderCurYun();
+  if (window.innerWidth < 768) showToast('即将翻转横屏');
   fitBaziChart();
   requestAnimationFrame(function () {
     requestAnimationFrame(renderBaziRelations);
