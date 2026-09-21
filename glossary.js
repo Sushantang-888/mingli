@@ -11,82 +11,81 @@
 var GLOSSARY = {
   '比肩': {
     category: '十神', pinyin: 'bǐ jiān',
-    definition: '与日主同五行、同阴阳者。主兄弟、朋友、同辈、同事，代表竞争、自尊与自我。',
+    definition: '与日主同五行、同阴阳者。主兄弟、朋友、同辈，代表竞争与自我。',
     citations: [
-      { book: '《子平真诠》', chapter: '论十神', text: '同我者为比肩。' },
-      { book: '《渊海子平》', chapter: '论十神', text: '比和者为比劫。' }
+      { book: '《渊海子平》', chapter: '论十神', text: '比肩、兄弟。' }
     ],
     related: ['劫财']
   },
   '劫财': {
     category: '十神', pinyin: 'jié cái',
-    definition: '与日主同五行、异阴阳者。主异性手足、朋友，亦主破财、冒险、冲动与争夺。',
+    definition: '与日主同五行、异阴阳者。主异性手足、朋友，亦主破财、冲动。',
     citations: [
-      { book: '《子平真诠》', chapter: '论十神', text: '同我而异性者为劫财。' }
+      { book: '《渊海子平》', chapter: '论十神', text: '劫财、败财，剋父及妻。' }
     ],
     related: ['比肩']
   },
   '食神': {
     category: '十神', pinyin: 'shí shén',
-    definition: '日主所生、同阴阳者。主才华、口福、福气、安逸，为生财之源，吉神之首。',
+    definition: '日主所生、同阴阳者。主才华、口福、福气，为生财之源。',
     citations: [
-      { book: '《子平真诠》', chapter: '论十神', text: '我生而同性者为食神。' }
+      { book: '《渊海子平》', chapter: '论十神', text: '食神、天厨、寿星，为男。' }
     ],
     related: ['伤官']
   },
   '伤官': {
     category: '十神', pinyin: 'shāng guān',
-    definition: '日主所生、异阴阳者。主才华外露、聪明善辩、叛逆创新，亦主口舌、伤官见官。',
+    definition: '日主所生、异阴阳者。主才华外露、叛逆创新，亦主口舌。',
     citations: [
-      { book: '《子平真诠》', chapter: '论十神', text: '我生而异性者为伤官。' }
+      { book: '《渊海子平》', chapter: '论十神', text: '伤官、退财、耗气，子甥。' }
     ],
     related: ['食神']
   },
   '偏财': {
     category: '十神', pinyin: 'piān cái',
-    definition: '日主所克、同阴阳者。主横财、意外之财、父星，亦主慷慨、经营、众人之财。',
+    definition: '日主所克、同阴阳者。主横财、父星，亦主慷慨、经营。',
     citations: [
-      { book: '《子平真诠》', chapter: '论十神', text: '我克而同性者为偏财。' }
+      { book: '《渊海子平》', chapter: '论十神', text: '偏财、偏妻、偏妾，剋子。' }
     ],
     related: ['正财']
   },
   '正财': {
     category: '十神', pinyin: 'zhèng cái',
-    definition: '日主所克、异阴阳者。主正当之财、妻星、勤俭、稳定收入，为养命之源。',
+    definition: '日主所克、异阴阳者。主正财、妻星、勤俭，为养命之源。',
     citations: [
-      { book: '《子平真诠》', chapter: '论十神', text: '我克而异性者为正财。' }
+      { book: '《渊海子平》', chapter: '论十神', text: '正财、正妻，剋母，为合神。' }
     ],
     related: ['偏财']
   },
   '七杀': {
     category: '十神', pinyin: 'qī shā',
-    definition: '克日主、同阴阳者。主压力、威权、魄力、凶险，亦主事业、决断与竞争。',
+    definition: '克日主、同阴阳者。主压力、威权、魄力、凶险。',
     citations: [
-      { book: '《子平真诠》', chapter: '论十神', text: '克我而同性者为七杀。' }
+      { book: '《渊海子平》', chapter: '论十神', text: '偏官、七杀、官鬼、将星。' }
     ],
     related: ['正官']
   },
   '正官': {
     category: '十神', pinyin: 'zhèng guān',
-    definition: '克日主、异阴阳者。主官职、名誉、约束、责任，女命为夫星，为贵气之首。',
+    definition: '克日主、异阴阳者。主官职、名誉、约束，女命为夫星。',
     citations: [
-      { book: '《子平真诠》', chapter: '论十神', text: '克我而异性者为正官。' }
+      { book: '《渊海子平》', chapter: '论十神', text: '正官、禄马、荣神，父母。' }
     ],
     related: ['七杀']
   },
   '偏印': {
     category: '十神', pinyin: 'piān yìn',
-    definition: '生日主、同阴阳者。主继母、偏门学识、孤独、灵感，亦名枭神，枭神夺食为忌。',
+    definition: '生日主、同阴阳者。主偏门学识、灵感，亦名枭神。',
     citations: [
-      { book: '《子平真诠》', chapter: '论十神', text: '生我而同性者为偏印。' }
+      { book: '《渊海子平》', chapter: '论十神', text: '倒食、偏印、梟神，剋女。' }
     ],
     related: ['正印']
   },
   '正印': {
     category: '十神', pinyin: 'zhèng yìn',
-    definition: '生日主、异阴阳者。主母亲、学业、庇护、名誉、文书，为生身之源。',
+    definition: '生日主、异阴阳者。主母亲、学业、庇护、名誉。',
     citations: [
-      { book: '《子平真诠》', chapter: '论十神', text: '生我而异性者为正印。' }
+      { book: '《渊海子平》', chapter: '论十神', text: '印綬、正人、君子，产业。' }
     ],
     related: ['偏印']
   },
