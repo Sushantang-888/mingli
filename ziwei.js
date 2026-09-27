@@ -395,8 +395,8 @@ function fitBoard() {
     // 手机：按宽度缩放（盘宽=手机宽），不按高度（避免滚动时地址栏收起导致晃动）
     scale = Math.min(1, availW / 1200);
   } else {
-    // 桌面/大屏：按高度自适应，盘高最多溢出视口 20%，兼顾宽度
-    scale = Math.min(1, availW / 1200, (availH * 1.2) / totalH);
+    // 桌面/大屏：按高度自适应，盘高贴合视口高度（一屏看完），兼顾宽度
+    scale = Math.min(1, availW / 1200, availH / totalH);
   }
   scale = Math.max(0.2, scale);
   board.style.width = (1200 * scale) + 'px';
