@@ -388,8 +388,17 @@ function fitBoard() {
   var grid = document.querySelector('.palace-grid');
   if (!board || !grid) return;
   var availW = board.parentElement ? board.parentElement.clientWidth : window.innerWidth;
+  var availH = window.innerHeight;
   var totalH = grid.scrollHeight || 1600;
-  var scale = Math.min(1, availW / 1200);
+  var scale;
+  if (window.innerWidth < 768) {
+    // 手机：按宽度缩放（盘宽=手机宽），不按高度（避免滚动时地址栏收起导致晃动）
+    scale = Math.min(1, availW / 1200);
+  } else {
+    // 桌面/大屏：按高度自适应，盘高最多溢出视口 20%，兼顾宽度
+    scale = Math.min(1, availW / 1200, (availH * 1.2) / totalH);
+  }
+  scale = Math.max(0.2, scale);
   board.style.width = (1200 * scale) + 'px';
   board.style.height = (totalH * scale) + 'px';
   grid.style.transform = 'scale(' + scale + ')';

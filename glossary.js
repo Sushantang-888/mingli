@@ -292,6 +292,39 @@ var GLOSSARY = {
   '相破': { category: '刑冲', definition: '子酉、午卯、辰丑、戌未、寅亥、巳申相破，主破损、破坏。' },
   '天干五合': { category: '合局', definition: '甲己合土、乙庚合金、丙辛合水、丁壬合木、戊癸合火，主相合、牵绊。' },
 
+  /* ---------- 具体组合（天干五合/地支六合/三合/相刑/相破/相害） ---------- */
+  '甲己合': { category: '天干五合', definition: '甲己合化土。' },
+  '乙庚合': { category: '天干五合', definition: '乙庚合化金。' },
+  '丙辛合': { category: '天干五合', definition: '丙辛合化水。' },
+  '丁壬合': { category: '天干五合', definition: '丁壬合化木。' },
+  '戊癸合': { category: '天干五合', definition: '戊癸合化火。' },
+  '子丑合': { category: '地支六合', definition: '子丑合化土。' },
+  '寅亥合': { category: '地支六合', definition: '寅亥合化木。' },
+  '卯戌合': { category: '地支六合', definition: '卯戌合化火。' },
+  '辰酉合': { category: '地支六合', definition: '辰酉合化金。' },
+  '巳申合': { category: '地支六合', definition: '巳申合化水。' },
+  '午未合': { category: '地支六合', definition: '午未合化土。' },
+  '申子辰': { category: '地支三合', definition: '地支三合水局。' },
+  '寅午戌': { category: '地支三合', definition: '地支三合火局。' },
+  '亥卯未': { category: '地支三合', definition: '地支三合木局。' },
+  '巳酉丑': { category: '地支三合', definition: '地支三合金局。' },
+  '寅巳申': { category: '地支相刑', definition: '地支三刑（无恩之刑）。' },
+  '丑戌未': { category: '地支相刑', definition: '地支三刑（恃势之刑）。' },
+  '子卯': { category: '地支相刑', definition: '地支相刑（无礼之刑）。' },
+  '辰午酉亥': { category: '地支相刑', definition: '地支自刑。' },
+  '子酉': { category: '地支相破', definition: '地支相破。' },
+  '午卯': { category: '地支相破', definition: '地支相破。' },
+  '辰丑': { category: '地支相破', definition: '地支相破。' },
+  '戌未': { category: '地支相破', definition: '地支相破。' },
+  '寅亥': { category: '地支相破', definition: '地支相破（又为六合）。' },
+  '巳申': { category: '地支相破', definition: '地支相破（又为六合）。' },
+  '子未': { category: '地支相害', definition: '地支相害。' },
+  '丑午': { category: '地支相害', definition: '地支相害。' },
+  '寅巳': { category: '地支相害', definition: '地支相害（又为相刑）。' },
+  '卯辰': { category: '地支相害', definition: '地支相害。' },
+  '申亥': { category: '地支相害', definition: '地支相害。' },
+  '酉戌': { category: '地支相害', definition: '地支相害。' },
+
   /* ---------- 神煞（八字） ---------- */
   '天乙贵人': { category: '神煞', definition: '众煞之首，主贵人扶助、逢凶化吉。',
     citations: [{ book: '《三命通会》', chapter: '论天乙贵人', text: '天乙者，乃天上之神，其神最尊贵，所至之处，一切凶煞隐然而避。' }] },
@@ -457,8 +490,9 @@ function refreshGather() {
       el.classList.remove('term');
     }
   });
-  // 隐藏批注富文本预览
+  // 隐藏批注富文本预览 + 恢复原输入框
   document.querySelectorAll('.quiz-note-preview').forEach(function (p) { p.style.display = 'none'; p.innerHTML = ''; });
+  document.querySelectorAll('.quiz-note').forEach(function (ta) { ta.style.display = ''; });
   if (!GATHER_MODE) return;
 
   function tag(el, key) {
@@ -506,7 +540,7 @@ function refreshGather() {
     annotateText(root);
   });
 
-  // 4. 手写批注（textarea）→ 富文本预览可拾词
+  // 4. 手写批注（textarea）→ 富文本预览可拾词（拾词时隐藏原输入框，只显示预览，避免出现两遍）
   document.querySelectorAll('.quiz-note').forEach(function (ta) {
     var prev = ta.parentNode.querySelector('.quiz-note-preview');
     if (!prev) return;
@@ -515,6 +549,7 @@ function refreshGather() {
       prev.innerHTML = escapeHtml(val);
       annotateText(prev);
       prev.style.display = 'block';
+      ta.style.display = 'none';
     }
   });
 }
