@@ -602,6 +602,50 @@ img.term {
   color: #333333;
 }
 .batch-text .hl { color: #c0392b; }
+/* 基础命理解析的按钮/星级/评价/详细展开 */
+.batch-heading { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.batch-actions { display: inline-flex; gap: 6px; margin-left: auto; }
+.batch-btn {
+  font-size: 12px;
+  padding: 3px 10px;
+  border: 1px solid #ddd;
+  border-radius: 100px;
+  background: #fff;
+  color: #666;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.batch-btn:hover { background: #f5f5f5; }
+.batch-stars { color: #e6a700; font-size: 14px; }
+.batch-detail {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: #f7f5f0;
+  border-left: 3px solid #e0d8c8;
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 1.8;
+  color: #444;
+}
+.batch-review {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #888;
+  line-height: 1.6;
+}
+.star-row { display: flex; gap: 6px; margin: 10px 0 4px; }
+.star-btn {
+  font-size: 28px;
+  border: none;
+  background: transparent;
+  color: #ddd;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+}
+.star-btn.on { color: #e6a700; }
+.star-btn:hover { color: #e6a700; }
 
 /* 大赛/命例布局：默认上下结构（先命盘，再题目+批注）；
  * 大屏（≥1800px，含 2560/4K，且容错浏览器边框、缩放）才左右两栏。 */

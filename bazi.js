@@ -2450,13 +2450,123 @@ function aiTrySolve(chartId, no) {
     showToast('AI 试解完成');
   })
   .catch(function (err) {
-    alert('AI 试解失败：' + err.message);
+    openModal(
+      '<div class="modal-title">⚠️ AI 试解失败</div>' +
+      '<div class="modal-sub">' + escapeHtml(err.message || '未知错误') + '</div>' +
+      '<div class="modal-sub">可能是网络波动或服务繁忙，可点「重试」再试一次。</div>' +
+      '<div class="modal-actions">' +
+      '<button class="modal-btn" onclick="closeModal()">取消</button>' +
+      '<button class="modal-btn primary" onclick="closeModal();aiTrySolve(' + chartId + ',' + no + ')">重试</button>' +
+      '</div>'
+    );
   })
   .finally(function () {
     var s = AI_SOLVING[key];
     if (s && s.timer) clearInterval(s.timer);
     delete AI_SOLVING[key];
     updateAiSolveBtn(chartId, no);
+  });
+}
+
+/* ============================================================
+ * 基础命理解析的评分/评价 + Ask AI 详细展开
+ * ============================================================ */
+var BATCH_RATE_IDX = null;
+var BATCH_RATE_STAR = 0;
+var BATCH_ASKING = {};
+
+function persistBatchNote(chart) {
+  var charts = loadCharts();
+  for (var i = 0; i < charts.length; i++) {
+    if (charts[i].id === chart.id) { charts[i] = chart; break; }
+  }
+  persistCharts(charts);
+  if (CURRENT_CHART && CURRENT_CHART.id === chart.id) {
+    CURRENT_CHART = chart;
+    renderBatchNote();
+  }
+}
+
+/* 评价纠错：星级 + 评价（≤1000字/展示≤6行）+ 保存 */
+function openBatchRate(idx) {
+  var chart = CURRENT_CHART;
+  if (!chart || !chart.batchNote || !chart.batchNote[idx]) return;
+  BATCH_RATE_IDX = idx;
+  var s = chart.batchNote[idx];
+  BATCH_RATE_STAR = s.rating || 0;
+  var stars = [1, 2, 3, 4, 5].map(function (n) {
+    return '<button class="star-btn' + (s.rating === n ? ' on' : '') + '" onclick="setStar(' + n + ')">★</button>';
+  }).join('');
+  openModal(
+    '<div class="modal-title">评价纠错 · ' + escapeHtml(s.title) + '</div>' +
+    '<div class="modal-sub">给这段解析打星 + 写评价</div>' +
+    '<div class="star-row" id="star-row">' + stars + '</div>' +
+    '<label class="modal-label">评价（最多 1000 字，展示最多 6 行）</label>' +
+    '<textarea class="modal-textarea" id="br-review" maxlength="1000" style="min-height:100px;max-height:180px;overflow-y:auto;" placeholder="写下你的评价或纠错…">' + escapeHtml(s.review || '') + '</textarea>' +
+    '<div class="modal-actions">' +
+    '<button class="modal-btn" onclick="closeModal()">取消</button>' +
+    '<button class="modal-btn primary" onclick="saveBatchRate()">保存</button>' +
+    '</div>'
+  );
+}
+function setStar(n) {
+  BATCH_RATE_STAR = n;
+  var row = document.getElementById('star-row');
+  if (!row) return;
+  row.querySelectorAll('.star-btn').forEach(function (b, i) {
+    b.classList.toggle('on', (i + 1) <= n);
+  });
+}
+function saveBatchRate() {
+  var chart = CURRENT_CHART;
+  if (!chart || !chart.batchNote || BATCH_RATE_IDX == null) { closeModal(); return; }
+  var s = chart.batchNote[BATCH_RATE_IDX];
+  if (!s) { closeModal(); return; }
+  s.rating = BATCH_RATE_STAR || null;
+  s.review = document.getElementById('br-review').value.trim();
+  persistBatchNote(chart);
+  closeModal();
+  showToast('已保存评价');
+}
+
+/* Ask AI：调 DeepSeek 生成该段非常详细的展开解释 */
+function batchAskAI(idx) {
+  var chart = CURRENT_CHART;
+  if (!chart || !chart.batchNote || !chart.batchNote[idx]) return;
+  var s = chart.batchNote[idx];
+  if (BATCH_ASKING[idx]) return;
+  BATCH_ASKING[idx] = true;
+
+  var data = calcBazi(chart.year, chart.month, chart.day, chart.hour, chart.minute, chart.gender);
+  var context = buildBaziText(chart, data);
+  var plain = s.content.replace(/<[^>]+>/g, '');
+  var prompt = '你是资深命理师。下面是命例的八字排盘和一段「' + s.title + '」的简要批注。请针对这一段，给出非常非常详细的展开解释（300字以上，越详细越好，可引古文原文），只输出解释正文（不要标题、不要重复原批注）。\n\n八字排盘：\n' + context + '\n\n简要批注（' + s.title + '）：\n' + plain;
+
+  showToast('AI 展开中…');
+
+  fetch(DEEPSEEK_PROXY, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: 'deepseek-chat', messages: [{ role: 'user', content: prompt }] })
+  })
+  .then(function (r) {
+    if (!r.ok) return r.text().then(function (t) { throw new Error('HTTP ' + r.status + '：' + t.slice(0, 200)); });
+    return r.json();
+  })
+  .then(function (data) {
+    var content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+    if (!content) throw new Error('返回为空');
+    var c = CURRENT_CHART;
+    if (!c || !c.batchNote || !c.batchNote[idx]) return;
+    c.batchNote[idx].aiDetail = content;
+    persistBatchNote(c);
+    showToast('AI 展开完成');
+  })
+  .catch(function (err) {
+    alert('AI 展开失败：' + err.message);
+  })
+  .finally(function () {
+    delete BATCH_ASKING[idx];
   });
 }
 
@@ -2470,10 +2580,18 @@ function renderBatchNote() {
   // 优先展示命例的 AI 批注（batchNote）
   if (CURRENT_CHART && CURRENT_CHART.batchNote && CURRENT_CHART.batchNote.length) {
     var aiHtml = '<div class="batch-title">命理批注</div>';
-    CURRENT_CHART.batchNote.forEach(function (s) {
+    CURRENT_CHART.batchNote.forEach(function (s, idx) {
       aiHtml += '<div class="batch-section">';
-      aiHtml += '<div class="batch-heading">' + escapeHtml(s.title) + '</div>';
+      aiHtml += '<div class="batch-heading">' + escapeHtml(s.title);
+      if (s.rating) aiHtml += ' <span class="batch-stars">' + new Array(s.rating + 1).join('★') + '</span>';
+      aiHtml += '<span class="batch-actions">';
+      aiHtml += '<button class="batch-btn" onclick="openBatchRate(' + idx + ')">评价纠错</button>';
+      aiHtml += '<button class="batch-btn" onclick="batchAskAI(' + idx + ')">Ask AI</button>';
+      aiHtml += '</span>';
+      aiHtml += '</div>';
       aiHtml += '<div class="batch-text">' + escapeHtml(s.content).replace(/\n/g, '<br>') + '</div>';
+      if (s.aiDetail) aiHtml += '<div class="batch-detail">' + escapeHtml(s.aiDetail).replace(/\n/g, '<br>') + '</div>';
+      if (s.review) aiHtml += '<div class="batch-review">📝 评价：' + escapeHtml(s.review).replace(/\n/g, '<br>') + '</div>';
       aiHtml += '</div>';
     });
     el.innerHTML = aiHtml;
