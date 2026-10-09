@@ -1799,7 +1799,49 @@ function normalizeOption(v, letter) {
   return letter + '. ' + v;
 }
 
-/* 文字录入题目：大文本框（暂存原文，供后续自动识别）+ 手动录入表单 */
+/* 把大赛题目文本解析成题目数组（题号+题干+选项，答案留空）
+ * 支持格式：数字题号开头（1 / 1. / 1、/ 1））+ A/B/C/D 选项 */
+function parseQuizText(text) {
+  if (!text) return [];
+  var lines = String(text).split(/\r?\n/);
+  var questions = [];
+  var cur = null;
+  lines.forEach(function (raw) {
+    var line = raw.trim();
+    if (!line) return;
+    if (/^\d{1,2}[.\s、\)）]/.test(line)) {
+      var no = parseInt(line.match(/^\d{1,2}/)[0], 10);
+      var topic = line.replace(/^\d{1,2}[.\s、\)）]+/, '').trim();
+      if (cur) questions.push(cur);
+      cur = { no: no, topic: topic, options: [], answer: null };
+    } else if (cur && /^[A-D][.\s、\)）]/.test(line)) {
+      cur.options.push(line);
+    } else if (cur && cur.options.length === 0) {
+      cur.topic += line;
+    }
+  });
+  if (cur) questions.push(cur);
+  return questions;
+}
+
+/* 解析并批量录入 */
+function submitTextParse() {
+  var chart = quizChartById(QUIZ_EDIT_CHART_ID);
+  if (!chart) { closeModal(); return; }
+  var text = document.getElementById('raw-text').value.trim();
+  if (!text) { alert('请先粘贴题目文本'); return; }
+  var qs = parseQuizText(text);
+  if (!qs.length) { alert('没解析出题目，请检查格式（数字题号开头 + A/B/C/D 选项）'); return; }
+  var baseNo = 0;
+  (chart.questions || []).forEach(function (q) { if (q.no > baseNo) baseNo = q.no; });
+  qs.forEach(function (q, i) {
+    upsertQuizQuestion(chart.id, { no: baseNo + i + 1, topic: q.topic, options: q.options, answer: null });
+  });
+  closeModal();
+  showToast('已解析录入 ' + qs.length + ' 道题');
+}
+
+/* 文字录入题目：粘贴整段原文 → 解析并录入；下面保留手动录入兜底 */
 function openQuizTextImport() {
   var chart = CURRENT_CHART;
   if (!chart || !chart.isQuiz) return;
@@ -1807,8 +1849,12 @@ function openQuizTextImport() {
   var no = nextQuizNo(quizChartById(chart.id));
   openModal(
     '<div class="modal-title">📝 文字录入题目</div>' +
-    '<div class="modal-sub">粘贴比赛原文（先暂存，自动识别下一步接 DeepSeek）</div>' +
-    '<textarea class="modal-textarea" id="raw-text" placeholder="把这一组题的原文粘贴到这里…">' + escapeHtml(chart.rawText || '') + '</textarea>' +
+    '<div class="modal-sub">把一组题的原文整段粘贴进来（数字题号 + A/B/C/D 选项），点「解析并录入」自动拆成题目，答案先留空之后补</div>' +
+    '<textarea class="modal-textarea" id="raw-text" placeholder="例如：\n1 下列哪一個描述…\nA …\nB …\nC …\nD …\n2 …">' + escapeHtml(chart.rawText || '') + '</textarea>' +
+    '<div class="modal-actions">' +
+    '<button class="modal-btn" onclick="closeModal()">取消</button>' +
+    '<button class="modal-btn primary" onclick="submitTextParse()">解析并录入</button>' +
+    '</div>' +
     '<div class="modal-divider"></div>' +
     '<div class="modal-sub">或手动录入第 ' + no + ' 道题</div>' +
     '<label class="modal-label">题干</label>' +
@@ -1820,7 +1866,6 @@ function openQuizTextImport() {
     '<label class="modal-label">正确答案（可先留空，之后补）</label>' +
     '<select class="modal-input" id="mq-answer"><option value="">（暂不填）</option><option>A</option><option>B</option><option>C</option><option>D</option></select>' +
     '<div class="modal-actions">' +
-    '<button class="modal-btn" onclick="closeModal()">取消</button>' +
     '<button class="modal-btn primary" onclick="submitManualQuestion()">保存这道题</button>' +
     '</div>'
   );
