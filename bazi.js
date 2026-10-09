@@ -1441,9 +1441,9 @@ function saveChart() {
   var gender = parseInt(document.getElementById('in-gender').value, 10);
   var city = document.getElementById('in-city').value.trim();
 
-  // 名字像大赛命例（如「23年命例1」）→ 二次确认是否转大赛命例
+  // 名字像大赛命例（如「23年命例1」「2023命例05」「2024年命例01」）→ 二次确认是否转大赛命例
   var isQuiz = false;
-  if (/年命例/.test(name)) {
+  if (isQuizLikeName(name)) {
     isQuiz = confirm('这个命例名字像大赛命例，是否转为「命理师大赛」命例？\n\n转大赛命例后：\n· 切换命例里会打上【赛】标\n· 排版变成大赛左右结构\n· 可录入题目、标准答案、写批注');
   }
 
@@ -1574,12 +1574,18 @@ function getQuizQuestions(chart) {
   return { questions: [], provider: chart.provider || '' };
 }
 
-/* 一次性自动迁移：把名字含「年命例」的普通命例批量转成大赛命例（用户手动加的 23/25年 命例） */
+/* 名字像大赛命例的判定：年份数字（2~4位）+ 可选「年」+「命例」
+ * 覆盖：23年命例1 / 2023命例05 / 2024年命例01 / 2025命例06 */
+function isQuizLikeName(name) {
+  return /\d{2,4}年?命例/.test(name || '');
+}
+
+/* 一次性自动迁移：把名字像大赛命例的普通命例批量转成大赛命例（用户手动加的 23/25年 命例） */
 function autoTagQuizCharts() {
   var charts = loadCharts();
   var changed = false;
   charts.forEach(function (c) {
-    if (!c.isQuiz && /年命例/.test(c.name)) {
+    if (!c.isQuiz && isQuizLikeName(c.name)) {
       c.isQuiz = true;
       if (!c.questions) c.questions = [];
       changed = true;
@@ -1589,6 +1595,17 @@ function autoTagQuizCharts() {
     persistCharts(charts);
     renderChartList();
   }
+}
+
+/* 手动把某个命例标成大赛命例（兜底，不依赖命名） */
+function markChartQuiz(id) {
+  var charts = loadCharts();
+  var c = charts.find(function (x) { return x.id === id; });
+  if (!c) return;
+  c.isQuiz = true;
+  if (!c.questions) c.questions = [];
+  persistCharts(charts);
+  renderChartList();
 }
 
 /* 取命例（按 id）/ 持久化并刷新题目区与列表 */
@@ -1983,6 +2000,9 @@ function renderChartList() {
     html += '<span class="chart-item-info">' + genderText + ' · ' + dateText + ' · ' + c.city + '</span>';
     html += '<span class="chart-item-actions">';
     html += '<button onclick="applyChartById(' + c.id + ')">载入</button>';
+    if (!c.isQuiz) {
+      html += '<button onclick="markChartQuiz(' + c.id + ')">标赛</button>';
+    }
     html += '<button onclick="deleteChart(' + c.id + ')">删除</button>';
     html += '</span>';
     html += '</div>';
