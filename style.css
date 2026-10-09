@@ -552,6 +552,15 @@ img.term {
   font-family: inherit;
 }
 .chart-item-actions button:hover { background: #f5f5f5; }
+.chart-edit-btn { color: #999; }
+.chart-edit-btn:hover { color: #0b0060; background: #f0edf8 !important; }
+
+/* 编辑命例弹窗里的年月日时分网格 */
+.modal-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0 12px;
+}
 
 /* 批注 */
 .batch-note {

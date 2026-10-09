@@ -1608,6 +1608,62 @@ function markChartQuiz(id) {
   renderChartList();
 }
 
+/* 编辑命例：时间/地点/性别/名称 */
+function editChart(id) {
+  var chart = quizChartById(id);
+  if (!chart) return;
+  QUIZ_EDIT_CHART_ID = id;
+  openModal(
+    '<div class="modal-title">✎ 编辑命例</div>' +
+    '<label class="modal-label">命例名称</label><input class="modal-input" id="ec-name" value="' + escapeHtml(chart.name) + '">' +
+    '<div class="modal-grid">' +
+    '<div><label class="modal-label">年</label><input class="modal-input" id="ec-year" type="number" value="' + chart.year + '"></div>' +
+    '<div><label class="modal-label">月</label><input class="modal-input" id="ec-month" type="number" value="' + chart.month + '"></div>' +
+    '<div><label class="modal-label">日</label><input class="modal-input" id="ec-day" type="number" value="' + chart.day + '"></div>' +
+    '<div><label class="modal-label">时</label><input class="modal-input" id="ec-hour" type="number" value="' + chart.hour + '"></div>' +
+    '<div><label class="modal-label">分</label><input class="modal-input" id="ec-minute" type="number" value="' + chart.minute + '"></div>' +
+    '</div>' +
+    '<label class="modal-label">城市</label><input class="modal-input" id="ec-city" value="' + escapeHtml(chart.city) + '">' +
+    '<label class="modal-label">性别</label>' +
+    '<select class="modal-input" id="ec-gender"><option value="0"' + (chart.gender === 0 ? ' selected' : '') + '>女（坤造）</option><option value="1"' + (chart.gender === 1 ? ' selected' : '') + '>男（乾造）</option></select>' +
+    '<div class="modal-actions">' +
+    '<button class="modal-btn" onclick="closeModal()">取消</button>' +
+    '<button class="modal-btn primary" onclick="submitEditChart()">保存</button>' +
+    '</div>'
+  );
+}
+function submitEditChart() {
+  var chart = quizChartById(QUIZ_EDIT_CHART_ID);
+  if (!chart) { closeModal(); return; }
+  var name = document.getElementById('ec-name').value.trim();
+  if (!name) { alert('请填命例名称'); return; }
+  var year = parseInt(document.getElementById('ec-year').value, 10);
+  var month = parseInt(document.getElementById('ec-month').value, 10);
+  var day = parseInt(document.getElementById('ec-day').value, 10);
+  var hour = parseInt(document.getElementById('ec-hour').value, 10) || 0;
+  var minute = parseInt(document.getElementById('ec-minute').value, 10) || 0;
+  var city = document.getElementById('ec-city').value.trim();
+  var gender = parseInt(document.getElementById('ec-gender').value, 10);
+  if (!year || !month || !day) { alert('请填完整的出生年月日'); return; }
+
+  chart.name = name;
+  chart.year = year; chart.month = month; chart.day = day;
+  chart.hour = hour; chart.minute = minute;
+  chart.city = city; chart.gender = gender;
+
+  // 非大赛命例 + 名字像大赛命例 → 二次确认转赛命例
+  if (!chart.isQuiz && isQuizLikeName(name)) {
+    if (confirm('这个命例名字像大赛命例，是否标记为「命理师大赛」命例？')) {
+      chart.isQuiz = true;
+      if (!chart.questions) chart.questions = [];
+    }
+  }
+
+  persistQuizChart(chart);
+  closeModal();
+  showToast('已保存');
+}
+
 /* 取命例（按 id）/ 持久化并刷新题目区与列表 */
 function quizChartById(id) { return loadCharts().find(function (c) { return c.id === id; }); }
 function persistQuizChart(chart) {
@@ -1616,7 +1672,11 @@ function persistQuizChart(chart) {
     if (charts[i].id === chart.id) { charts[i] = chart; break; }
   }
   persistCharts(charts);
-  renderQuizQuestions(chart);
+  // 只有当前载入的命例才刷新题目区，避免编辑其它命例时错乱
+  if (CURRENT_CHART && CURRENT_CHART.id === chart.id) {
+    CURRENT_CHART = chart;
+    renderQuizQuestions(chart);
+  }
   renderChartList();
 }
 
@@ -1935,17 +1995,45 @@ function submitManualQuestion() {
   showToast('已保存 Q' + no);
 }
 
-/* 图片录入题目：上传器（自动识别下一步接 DeepSeek） */
+/* ============ DeepSeek（图片识别题目 + 后续解读） ============ */
+var DEEPSEEK_KEY = localStorage.getItem('deepseek_api_key') || '';
+var QUIZ_IMAGE_DATA = null;  // 当前上传的图片 base64
+
+function openDeepseekSetting() {
+  openModal(
+    '<div class="modal-title">🔑 DeepSeek 设置</div>' +
+    '<div class="modal-sub">填入 DeepSeek API key（platform.deepseek.com 获取），用于图片识别题目</div>' +
+    '<input class="modal-input" id="ds-key" type="password" placeholder="sk-..." value="' + escapeHtml(DEEPSEEK_KEY) + '">' +
+    '<div class="modal-actions">' +
+    '<button class="modal-btn" onclick="closeModal()">取消</button>' +
+    '<button class="modal-btn primary" onclick="submitDeepseekKey()">保存</button>' +
+    '</div>'
+  );
+}
+function submitDeepseekKey() {
+  var k = document.getElementById('ds-key').value.trim();
+  DEEPSEEK_KEY = k;
+  localStorage.setItem('deepseek_api_key', k);
+  closeModal();
+  showToast('已保存 DeepSeek key');
+}
+
+/* 图片录入题目：上传截图 → DeepSeek 识别 → 录入 */
 function openQuizImageImport() {
   var chart = CURRENT_CHART;
   if (!chart || !chart.isQuiz) return;
   QUIZ_EDIT_CHART_ID = chart.id;
+  QUIZ_IMAGE_DATA = null;
   openModal(
     '<div class="modal-title">🖼 图片录入题目</div>' +
-    '<div class="modal-sub">上传大赛题目截图，自动识别下一步接 DeepSeek（当前可先点「文字录入题目」手动录入）</div>' +
+    '<div class="modal-sub">上传大赛题目截图，点「解析」自动识别成题目（需先设置 DeepSeek key）</div>' +
     '<input type="file" accept="image/*" class="modal-input" onchange="previewQuizImage(this)">' +
     '<div id="quiz-img-preview"></div>' +
-    '<div class="modal-actions"><button class="modal-btn" onclick="closeModal()">关闭</button></div>'
+    '<div class="modal-actions">' +
+    '<button class="modal-btn" onclick="openDeepseekSetting()">🔑 设置 Key</button>' +
+    '<button class="modal-btn" onclick="closeModal()">取消</button>' +
+    '<button class="modal-btn primary" id="quiz-parse-btn" onclick="parseQuizImage()">解析</button>' +
+    '</div>'
   );
 }
 function previewQuizImage(input) {
@@ -1954,9 +2042,58 @@ function previewQuizImage(input) {
   if (!p || !f) return;
   var reader = new FileReader();
   reader.onload = function (e) {
+    QUIZ_IMAGE_DATA = e.target.result;
     p.innerHTML = '<img src="' + e.target.result + '" style="max-width:100%;border-radius:6px;margin-top:10px;">';
   };
   reader.readAsDataURL(f);
+}
+function parseQuizImage() {
+  if (!QUIZ_IMAGE_DATA) { alert('请先上传图片'); return; }
+  if (!DEEPSEEK_KEY) { alert('请先设置 DeepSeek key（点「🔑 设置 Key」）'); return; }
+  var btn = document.getElementById('quiz-parse-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '解析中…'; }
+
+  var prompt = '识别图片中的所有题目。每道题包含：题干 + A/B/C/D 四个选项。输出 JSON 数组：\n[{"no":1,"topic":"题干","options":["A选项","B选项","C选项","D选项"],"answer":null}]\n若图片标注了正确答案则填 answer 为 A/B/C/D，否则为 null。只输出 JSON，不要其他文字。';
+
+  fetch('https://api.deepseek.com/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + DEEPSEEK_KEY },
+    body: JSON.stringify({
+      model: 'deepseek-flash',
+      messages: [
+        { role: 'user', content: [
+          { type: 'text', text: prompt },
+          { type: 'image_url', image_url: { url: QUIZ_IMAGE_DATA } }
+        ]}
+      ]
+    })
+  })
+  .then(function (r) {
+    if (!r.ok) return r.text().then(function (t) { throw new Error('HTTP ' + r.status + '：' + t.slice(0, 200)); });
+    return r.json();
+  })
+  .then(function (data) {
+    var content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+    if (!content) throw new Error('返回为空');
+    var m = content.match(/\[[\s\S]*\]/);
+    var qs = JSON.parse(m ? m[0] : content);
+    if (!Array.isArray(qs)) throw new Error('返回不是题目数组');
+    var chart = quizChartById(QUIZ_EDIT_CHART_ID);
+    if (!chart) return;
+    var baseNo = 0;
+    (chart.questions || []).forEach(function (q) { if (q.no > baseNo) baseNo = q.no; });
+    qs.forEach(function (q, i) {
+      upsertQuizQuestion(chart.id, { no: baseNo + i + 1, topic: q.topic, options: q.options, answer: q.answer || null });
+    });
+    closeModal();
+    showToast('已识别录入 ' + qs.length + ' 道题');
+  })
+  .catch(function (err) {
+    alert('解析失败：' + err.message + '\n\n若提示 CORS / Failed to fetch（跨域被拦），说明需要加一层代理，我下一步处理。');
+  })
+  .finally(function () {
+    if (btn) { btn.disabled = false; btn.textContent = '解析'; }
+  });
 }
 
 /* 添加正确答案：点选一个选项 */
@@ -2083,10 +2220,8 @@ function renderChartList() {
     html += '<span class="chart-item-name">' + (c.isQuiz ? '<span class="quiz-tag">赛</span>' : '') + c.name + '</span>';
     html += '<span class="chart-item-info">' + genderText + ' · ' + dateText + ' · ' + c.city + '</span>';
     html += '<span class="chart-item-actions">';
+    html += '<button class="chart-edit-btn" title="编辑命例" onclick="editChart(' + c.id + ')">✎</button>';
     html += '<button onclick="applyChartById(' + c.id + ')">载入</button>';
-    if (!c.isQuiz) {
-      html += '<button onclick="markChartQuiz(' + c.id + ')">标赛</button>';
-    }
     html += '<button onclick="deleteChart(' + c.id + ')">删除</button>';
     html += '</span>';
     html += '</div>';
