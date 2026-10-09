@@ -1737,12 +1737,14 @@ function setQuizAnswer(chartId, no, answer) {
 /* 我的答案：点选一个选项（做题人自己的选择） */
 function openMyAnswerPicker(chartId, no) {
   var chart = quizChartById(chartId);
-  if (!chart || !chart.questions) return;
-  var q = chart.questions.find(function (x) { return x.no === no; });
+  if (!chart) return;
+  var qz = getQuizQuestions(chart);
+  var q = (qz.questions || []).find(function (x) { return x.no === no; });
   if (!q) return;
+  var myAnswer = (chart.myAnswers && chart.myAnswers[no]) || null;
   var optsHtml = q.options.map(function (o) {
     var letter = o.charAt(0);
-    var active = (letter === q.myAnswer) ? ' active' : '';
+    var active = (letter === myAnswer) ? ' active' : '';
     return '<button class="modal-opt-btn' + active + '" onclick="setMyAnswer(' + chartId + ',' + no + ',\'' + letter + '\')">' + escapeHtml(o) + '</button>';
   }).join('');
   openModal(
@@ -1757,10 +1759,10 @@ function openMyAnswerPicker(chartId, no) {
 }
 function setMyAnswer(chartId, no, letter) {
   var chart = quizChartById(chartId);
-  if (!chart || !chart.questions) return;
-  var q = chart.questions.find(function (x) { return x.no === no; });
-  if (!q) return;
-  q.myAnswer = letter || null;
+  if (!chart) return;
+  if (!chart.myAnswers) chart.myAnswers = {};
+  if (letter) chart.myAnswers[no] = letter;
+  else delete chart.myAnswers[no];
   persistQuizChart(chart);
   closeModal();
 }
@@ -1797,14 +1799,16 @@ function renderQuizQuestions(chart) {
 
   questions.forEach(function (q) {
     var val = notes[q.no] || '';
+    var myAnswer = (chart.myAnswers && chart.myAnswers[q.no]) || null;
+    var aiInfo = (chart.aiAnswers && chart.aiAnswers[q.no]) || null;
     html += '<div class="quiz-q">';
     html += '<div class="quiz-q-body">';
     html += '<div class="quiz-q-head">';
     html += '<div class="quiz-q-topic">Q' + q.no + ' · ' + annotateYears(q.topic, CURRENT_DATA) + '</div>';
-    // 右侧按钮组：我的答案 + 正确答案（添加/编辑）
+    // 右侧按钮组：AI 试解 + 我的答案 + 正确答案（添加/编辑）
     html += '<div class="quiz-q-actions">';
     html += '<button class="quiz-ai-solve" data-cid="' + chart.id + '" data-q="' + q.no + '"' + (AI_SOLVING[chart.id + '-' + q.no] ? ' disabled' : '') + ' onclick="aiTrySolve(' + chart.id + ', ' + q.no + ')">' + (AI_SOLVING[chart.id + '-' + q.no] ? ('试解 ' + Math.round(AI_SOLVING[chart.id + '-' + q.no].percent) + '%') : 'AI 试解') + '</button>';
-    html += '<button class="quiz-my-answer' + (q.myAnswer ? ' done' : '') + '" onclick="openMyAnswerPicker(' + chart.id + ', ' + q.no + ')">我的答案' + (q.myAnswer ? ' ✅' : '') + '</button>';
+    html += '<button class="quiz-my-answer' + (myAnswer ? ' done' : '') + '" onclick="openMyAnswerPicker(' + chart.id + ', ' + q.no + ')">我的答案' + (myAnswer ? ' ✅' : '') + '</button>';
     if (q.answer) {
       html += '<button class="quiz-edit-q" title="编辑题目和正确答案" onclick="openQuizQuestionEditor(' + chart.id + ', ' + q.no + ')">✎</button>';
     } else {
@@ -1815,8 +1819,8 @@ function renderQuizQuestions(chart) {
     q.options.forEach(function (o) {
       var letter = o.charAt(0);
       var correct = (letter === q.answer);
-      var mine = (letter === q.myAnswer);
-      var ai = (letter === q.aiAnswer);
+      var mine = (letter === myAnswer);
+      var ai = aiInfo && (letter === aiInfo.answer);
       var marks = '';
       if (correct) marks += ' <span class="quiz-correct-mark">✨</span>';
       if (mine) marks += ' <span class="quiz-my-mark">✅</span>';
@@ -1825,11 +1829,11 @@ function renderQuizQuestions(chart) {
     });
     html += '</div>';
     // AI 试解结果卡片（批注框上方）
-    if (q.aiReason) {
+    if (aiInfo && aiInfo.reason) {
       html += '<div class="quiz-ai-card">';
-      html += '<div class="quiz-ai-card-head">🤖 AI 试解' + (q.aiAnswer ? '：<b>' + escapeHtml(q.aiAnswer) + '</b>' : '') + '</div>';
-      html += '<div class="quiz-ai-card-reason">' + escapeHtml(q.aiReason).replace(/\n/g, '<br>') + '</div>';
-      if (q.aiReference) html += '<div class="quiz-ai-card-ref">' + escapeHtml(q.aiReference).replace(/\n/g, '<br>') + '</div>';
+      html += '<div class="quiz-ai-card-head">🤖 AI 试解' + (aiInfo.answer ? '：<b>' + escapeHtml(aiInfo.answer) + '</b>' : '') + '</div>';
+      html += '<div class="quiz-ai-card-reason">' + escapeHtml(aiInfo.reason).replace(/\n/g, '<br>') + '</div>';
+      if (aiInfo.reference) html += '<div class="quiz-ai-card-ref">' + escapeHtml(aiInfo.reference).replace(/\n/g, '<br>') + '</div>';
       html += '</div>';
     }
     html += '<textarea class="quiz-note" data-q="' + q.no + '" placeholder="写批注…" oninput="saveQuizNote(' + chart.id + ', ' + q.no + ', this.value)">' + escapeHtml(val) + '</textarea>';
@@ -2437,14 +2441,11 @@ function aiTrySolve(chartId, no) {
     if (!content) throw new Error('返回为空');
     var m = content.match(/\{[\s\S]*\}/);
     var res = JSON.parse(m ? m[0] : content);
-    // 存到题目（选项标 ❤️ + 批注框上方卡片）
+    // 存到命例级别 aiAnswers（对 QUIZ_BANK 命例和 chart.questions 命例都生效）
     var c = quizChartById(chartId);
-    if (!c || !c.questions) return;
-    var qq = c.questions.find(function (x) { return x.no === no; });
-    if (!qq) return;
-    qq.aiAnswer = res.answer || null;
-    qq.aiReason = res.reason || '';
-    qq.aiReference = res.reference || res.references || '';
+    if (!c) return;
+    if (!c.aiAnswers) c.aiAnswers = {};
+    c.aiAnswers[no] = { answer: res.answer || null, reason: res.reason || '', reference: res.reference || res.references || '' };
     persistQuizChart(c);
     showToast('AI 试解完成');
   })
