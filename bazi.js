@@ -1803,7 +1803,7 @@ function renderQuizQuestions(chart) {
     html += '<div class="quiz-q-topic">Q' + q.no + ' · ' + annotateYears(q.topic, CURRENT_DATA) + '</div>';
     // 右侧按钮组：我的答案 + 正确答案（添加/编辑）
     html += '<div class="quiz-q-actions">';
-    html += '<button class="quiz-ai-solve" onclick="aiTrySolve(' + chart.id + ', ' + q.no + ')">AI 试解</button>';
+    html += '<button class="quiz-ai-solve" data-cid="' + chart.id + '" data-q="' + q.no + '"' + (AI_SOLVING[chart.id + '-' + q.no] ? ' disabled' : '') + ' onclick="aiTrySolve(' + chart.id + ', ' + q.no + ')">' + (AI_SOLVING[chart.id + '-' + q.no] ? ('试解 ' + Math.round(AI_SOLVING[chart.id + '-' + q.no].percent) + '%') : 'AI 试解') + '</button>';
     html += '<button class="quiz-my-answer' + (q.myAnswer ? ' done' : '') + '" onclick="openMyAnswerPicker(' + chart.id + ', ' + q.no + ')">我的答案' + (q.myAnswer ? ' ✅' : '') + '</button>';
     if (q.answer) {
       html += '<button class="quiz-edit-q" title="编辑题目和正确答案" onclick="openQuizQuestionEditor(' + chart.id + ', ' + q.no + ')">✎</button>';
@@ -1816,12 +1816,22 @@ function renderQuizQuestions(chart) {
       var letter = o.charAt(0);
       var correct = (letter === q.answer);
       var mine = (letter === q.myAnswer);
+      var ai = (letter === q.aiAnswer);
       var marks = '';
-      if (mine) marks += ' <span class="quiz-my-mark">✅</span>';
       if (correct) marks += ' <span class="quiz-correct-mark">✨</span>';
+      if (mine) marks += ' <span class="quiz-my-mark">✅</span>';
+      if (ai) marks += ' <span class="quiz-ai-mark">❤️</span>';
       html += '<div class="quiz-opt' + (correct ? ' correct' : '') + '">' + annotateYears(o, CURRENT_DATA) + marks + '</div>';
     });
     html += '</div>';
+    // AI 试解结果卡片（批注框上方）
+    if (q.aiReason) {
+      html += '<div class="quiz-ai-card">';
+      html += '<div class="quiz-ai-card-head">🤖 AI 试解' + (q.aiAnswer ? '：<b>' + escapeHtml(q.aiAnswer) + '</b>' : '') + '</div>';
+      html += '<div class="quiz-ai-card-reason">' + escapeHtml(q.aiReason).replace(/\n/g, '<br>') + '</div>';
+      if (q.aiReference) html += '<div class="quiz-ai-card-ref">' + escapeHtml(q.aiReference).replace(/\n/g, '<br>') + '</div>';
+      html += '</div>';
+    }
     html += '<textarea class="quiz-note" data-q="' + q.no + '" placeholder="写批注…" oninput="saveQuizNote(' + chart.id + ', ' + q.no + ', this.value)">' + escapeHtml(val) + '</textarea>';
     html += '<div class="quiz-note-preview" data-q="' + q.no + '"></div>';
     html += '</div>';
@@ -2357,6 +2367,19 @@ function aiAnalyzeChart(id) {
 
 /* AI 试解：把排盘 + 题目 + 年份大运流年喂给 DeepSeek，试解一道大赛题 */
 var AI_SOLVING = {};
+/* 只更新 AI 试解按钮的百分比文案 + 横向填充背景（不重渲染题目区，避免丢批注输入） */
+function updateAiSolveBtn(chartId, no) {
+  var btn = document.querySelector('.quiz-ai-solve[data-cid="' + chartId + '"][data-q="' + no + '"]');
+  if (!btn) return;
+  var s = AI_SOLVING[chartId + '-' + no];
+  if (s) {
+    btn.textContent = '试解 ' + Math.round(s.percent) + '%';
+    btn.style.background = 'linear-gradient(to right, #e3d9ff ' + s.percent + '%, #f3eeff ' + s.percent + '%)';
+  } else {
+    btn.textContent = 'AI 试解';
+    btn.style.background = '';
+  }
+}
 function aiTrySolve(chartId, no) {
   var chart = quizChartById(chartId);
   if (!chart) return;
@@ -2365,7 +2388,15 @@ function aiTrySolve(chartId, no) {
   if (!q) return;
   var key = chartId + '-' + no;
   if (AI_SOLVING[key]) return;
-  AI_SOLVING[key] = true;
+  AI_SOLVING[key] = { percent: 0, timer: null };
+  // 进度动画：估算百分比，横向填充按钮背景
+  AI_SOLVING[key].timer = setInterval(function () {
+    var s = AI_SOLVING[key];
+    if (!s) return;
+    s.percent = Math.min(92, s.percent + (Math.random() * 3 + 1.2));
+    updateAiSolveBtn(chartId, no);
+  }, 700);
+  updateAiSolveBtn(chartId, no);
 
   var data = calcBazi(chart.year, chart.month, chart.day, chart.hour, chart.minute, chart.gender);
   var context = buildBaziText(chart, data);
@@ -2406,20 +2437,25 @@ function aiTrySolve(chartId, no) {
     if (!content) throw new Error('返回为空');
     var m = content.match(/\{[\s\S]*\}/);
     var res = JSON.parse(m ? m[0] : content);
-    openModal(
-      '<div class="modal-title">AI 试解 Q' + no + '</div>' +
-      '<div class="modal-sub">' + escapeHtml(q.topic) + '</div>' +
-      '<div class="ai-answer">1. 答案：<b>' + escapeHtml(res.answer || '?') + '</b></div>' +
-      '<div class="ai-reason">2. 原因：' + escapeHtml(res.reason || '').replace(/\n/g, '<br>') + '</div>' +
-      '<div class="ai-ref">3. 古文原文 / 参考：' + escapeHtml(res.reference || res.references || '').replace(/\n/g, '<br>') + '</div>' +
-      '<div class="modal-actions"><button class="modal-btn" onclick="closeModal()">关闭</button></div>'
-    );
+    // 存到题目（选项标 ❤️ + 批注框上方卡片）
+    var c = quizChartById(chartId);
+    if (!c || !c.questions) return;
+    var qq = c.questions.find(function (x) { return x.no === no; });
+    if (!qq) return;
+    qq.aiAnswer = res.answer || null;
+    qq.aiReason = res.reason || '';
+    qq.aiReference = res.reference || res.references || '';
+    persistQuizChart(c);
+    showToast('AI 试解完成');
   })
   .catch(function (err) {
     alert('AI 试解失败：' + err.message);
   })
   .finally(function () {
+    var s = AI_SOLVING[key];
+    if (s && s.timer) clearInterval(s.timer);
     delete AI_SOLVING[key];
+    updateAiSolveBtn(chartId, no);
   });
 }
 

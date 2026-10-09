@@ -759,6 +759,10 @@ img.term {
   color: #27ae60;   /* ✅ 我的答案（绿色） */
   margin-left: 6px;
 }
+.quiz-ai-mark {
+  color: #ff4d8f;   /* ❤️ AI 试解答案（粉色） */
+  margin-left: 6px;
+}
 
 /* 题目 Qx 行：题干 + 右侧按钮（添加正确答案 / 编辑铅笔） */
 .quiz-q-head {
@@ -828,6 +832,22 @@ img.term {
   white-space: nowrap;
 }
 .quiz-ai-solve:hover { background: #ece3ff; }
+.quiz-ai-solve:disabled { opacity: 0.5; cursor: default; }
+/* AI 试解结果卡片（批注框上方） */
+.quiz-ai-card {
+  margin: 10px 0;
+  padding: 10px 14px;
+  background: #faf7ff;
+  border: 1px solid #e6dcff;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #444;
+}
+.quiz-ai-card-head { font-weight: 600; color: #7c4dff; margin-bottom: 4px; }
+.quiz-ai-card-head b { color: #c0392b; }
+.quiz-ai-card-reason { margin-bottom: 6px; }
+.quiz-ai-card-ref { color: #777; font-size: 12px; }
 
 /* 大赛命例题目录入按钮（不足 5 道时显示） */
 .quiz-import-btns {
