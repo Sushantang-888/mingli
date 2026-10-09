@@ -1649,6 +1649,37 @@ function setQuizAnswer(chartId, no, answer) {
   closeModal();
 }
 
+/* 我的答案：点选一个选项（做题人自己的选择） */
+function openMyAnswerPicker(chartId, no) {
+  var chart = quizChartById(chartId);
+  if (!chart || !chart.questions) return;
+  var q = chart.questions.find(function (x) { return x.no === no; });
+  if (!q) return;
+  var optsHtml = q.options.map(function (o) {
+    var letter = o.charAt(0);
+    var active = (letter === q.myAnswer) ? ' active' : '';
+    return '<button class="modal-opt-btn' + active + '" onclick="setMyAnswer(' + chartId + ',' + no + ',\'' + letter + '\')">' + escapeHtml(o) + '</button>';
+  }).join('');
+  openModal(
+    '<div class="modal-title">Q' + no + ' 我的答案</div>' +
+    '<div class="modal-sub">点选你自己的答案（不计入标准答案）</div>' +
+    optsHtml +
+    '<div class="modal-actions">' +
+    '<button class="modal-btn" onclick="setMyAnswer(' + chartId + ',' + no + ',null)">清除我的答案</button>' +
+    '<button class="modal-btn" onclick="closeModal()">取消</button>' +
+    '</div>'
+  );
+}
+function setMyAnswer(chartId, no, letter) {
+  var chart = quizChartById(chartId);
+  if (!chart || !chart.questions) return;
+  var q = chart.questions.find(function (x) { return x.no === no; });
+  if (!q) return;
+  q.myAnswer = letter || null;
+  persistQuizChart(chart);
+  closeModal();
+}
+
 function renderQuizQuestions(chart) {
   var el = document.getElementById('quiz-questions');
   var layout = document.getElementById('quiz-layout');
@@ -1685,16 +1716,24 @@ function renderQuizQuestions(chart) {
     html += '<div class="quiz-q-body">';
     html += '<div class="quiz-q-head">';
     html += '<div class="quiz-q-topic">Q' + q.no + ' · ' + annotateYears(q.topic, CURRENT_DATA) + '</div>';
+    // 右侧按钮组：我的答案 + 正确答案（添加/编辑）
+    html += '<div class="quiz-q-actions">';
+    html += '<button class="quiz-my-answer' + (q.myAnswer ? ' done' : '') + '" onclick="openMyAnswerPicker(' + chart.id + ', ' + q.no + ')">我的答案' + (q.myAnswer ? ' ✅' : '') + '</button>';
     if (q.answer) {
       html += '<button class="quiz-edit-q" title="编辑题目和正确答案" onclick="openQuizQuestionEditor(' + chart.id + ', ' + q.no + ')">✎</button>';
     } else {
       html += '<button class="quiz-add-answer" onclick="openQuizAnswerPicker(' + chart.id + ', ' + q.no + ')">添加正确答案</button>';
     }
     html += '</div>';
+    html += '</div>';
     q.options.forEach(function (o) {
       var letter = o.charAt(0);
       var correct = (letter === q.answer);
-      html += '<div class="quiz-opt' + (correct ? ' correct' : '') + '">' + annotateYears(o, CURRENT_DATA) + (correct ? ' <span class="quiz-correct-mark">✓</span>' : '') + '</div>';
+      var mine = (letter === q.myAnswer);
+      var marks = '';
+      if (mine) marks += ' <span class="quiz-my-mark">✅</span>';
+      if (correct) marks += ' <span class="quiz-correct-mark">✨</span>';
+      html += '<div class="quiz-opt' + (correct ? ' correct' : '') + '">' + annotateYears(o, CURRENT_DATA) + marks + '</div>';
     });
     html += '</div>';
     html += '<textarea class="quiz-note" data-q="' + q.no + '" placeholder="写批注…" oninput="saveQuizNote(' + chart.id + ', ' + q.no + ', this.value)">' + escapeHtml(val) + '</textarea>';
