@@ -151,9 +151,9 @@ function renderPalaces() {
     '<div class="ci-value">身主 ' + a.body + '</div>' +
     '<div class="center-dims">' +
       '<button class="cdim' + (CURRENT_DIM === 'origin' ? ' active' : '') + '" data-dim="origin" onclick="switchDim(\'origin\')">命局</button>' +
-      '<button class="cdim' + (CURRENT_DIM === 'decadal' ? ' active' : '') + '" data-dim="decadal" onclick="switchDim(\'decadal\')">大运 <span class="dim-arrow" onclick="event.stopPropagation(); ziweiYunDropdown(\'decadal\')">▾</span></button>' +
-      '<button class="cdim' + (CURRENT_DIM === 'yearly' ? ' active' : '') + '" data-dim="yearly" onclick="switchDim(\'yearly\')">流年 <span class="dim-arrow" onclick="event.stopPropagation(); ziweiYunDropdown(\'yearly\')">▾</span></button>' +
-      '<button class="cdim' + (CURRENT_DIM === 'monthly' ? ' active' : '') + '" data-dim="monthly" onclick="switchDim(\'monthly\')">流月 <span class="dim-arrow" onclick="event.stopPropagation(); ziweiYunDropdown(\'monthly\')">▾</span></button>' +
+      '<button class="cdim' + (CURRENT_DIM === 'decadal' ? ' active' : '') + '" data-dim="decadal" onclick="switchDim(\'decadal\')">' + ziweiDimLabel('decadal') + ' <span class="dim-arrow" onclick="event.stopPropagation(); ziweiYunDropdown(\'decadal\')">▾</span></button>' +
+      '<button class="cdim' + (CURRENT_DIM === 'yearly' ? ' active' : '') + '" data-dim="yearly" onclick="switchDim(\'yearly\')">' + ziweiDimLabel('yearly') + ' <span class="dim-arrow" onclick="event.stopPropagation(); ziweiYunDropdown(\'yearly\')">▾</span></button>' +
+      '<button class="cdim' + (CURRENT_DIM === 'monthly' ? ' active' : '') + '" data-dim="monthly" onclick="switchDim(\'monthly\')">' + ziweiDimLabel('monthly') + ' <span class="dim-arrow" onclick="event.stopPropagation(); ziweiYunDropdown(\'monthly\')">▾</span></button>' +
       '<button class="cdim cdim-now" onclick="ziweiGoCurrentMonth()">当前月</button>' +
     '</div>';
   grid.appendChild(center);
@@ -529,6 +529,39 @@ function ziweiCurrentYear() {
   return (yl.length ? yl[0].year : null);
 }
 
+/* 当前选中的大运/流年/流月时间文本（用于按钮展示，如「1995~2004年」「1999年」「9月」） */
+function ziweiSelectedTime(dim) {
+  if (!ASTROLABE || !HOROSCOPE) return '';
+  if (dim === 'decadal' && HOROSCOPE.decadal) {
+    var dl = ASTROLABE.decadalList();
+    for (var i = 0; i < dl.length; i++) {
+      if (dl[i].index === HOROSCOPE.decadal.index) return dl[i].yearRange[0] + '~' + dl[i].yearRange[1] + '年';
+    }
+  } else if (dim === 'yearly' && HOROSCOPE.yearly) {
+    var decIdx = HOROSCOPE.decadal ? HOROSCOPE.decadal.index : 0;
+    var yl = ASTROLABE.yearlyList(decadalListPos(decIdx));
+    for (var i = 0; i < yl.length; i++) {
+      if (yl[i].index === HOROSCOPE.yearly.index) return yl[i].year + '年';
+    }
+  } else if (dim === 'monthly' && HOROSCOPE.monthly) {
+    var curYear = ziweiCurrentYear();
+    if (curYear) {
+      var ml = ASTROLABE.monthlyList(curYear, 1);
+      for (var i = 0; i < ml.length; i++) {
+        if (ml[i].index === HOROSCOPE.monthly.index) return ml[i].month + '月';
+      }
+    }
+  }
+  return '';
+}
+
+/* 维度按钮文字：「流年」→「流年：1999年」 */
+function ziweiDimLabel(dim) {
+  var base = dim === 'decadal' ? '大运' : (dim === 'yearly' ? '流年' : '流月');
+  var t = ziweiSelectedTime(dim);
+  return base + (t ? '<span class="dim-sel">：' + t + '</span>' : '');
+}
+
 /* 浮层：大运/流年/流月列表 */
 function ziweiYunDropdown(key) {
   closeZiweiDropdown();
@@ -575,6 +608,7 @@ function ziweiYunDropdown(key) {
     var r = btn.getBoundingClientRect();
     dd.style.left = (r.left + r.width / 2) + 'px';
     dd.style.top = (r.bottom + 4) + 'px';
+    clampFixedToViewport(dd);
   }
 }
 

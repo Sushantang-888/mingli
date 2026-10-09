@@ -844,6 +844,35 @@ function renderYunItem(container, ganZhi, topLabel, bottomLabel, onClick) {
   container.appendChild(el);
 }
 
+/* 防出界：把 fixed 浮层限制在视口内（超出则贴边），任何屏幕尺寸都生效。
+ * 用 getBoundingClientRect 量视觉位置（含 transform 缩放/居中偏移），
+ * 再按偏移量回写 style.left/top。 */
+function clampFixedToViewport(el, margin) {
+  if (!el) return;
+  margin = (margin == null) ? 8 : margin;
+  var vw = window.innerWidth, vh = window.innerHeight;
+  var r = el.getBoundingClientRect();
+  var dx = 0, dy = 0;
+  // 水平：浮层比视口宽 → 贴左（内部横向滚动）；否则优先贴右、再防左出界
+  if (r.width + margin * 2 >= vw) {
+    dx = margin - r.left;
+  } else {
+    if (r.right > vw - margin) dx = vw - margin - r.right;
+    if (r.left < margin) dx = margin - r.left;
+  }
+  // 垂直：浮层比视口高 → 贴上；否则优先贴下、再防上出界
+  if (r.height + margin * 2 >= vh) {
+    dy = margin - r.top;
+  } else {
+    if (r.bottom > vh - margin) dy = vh - margin - r.bottom;
+    if (r.top < margin) dy = margin - r.top;
+  }
+  if (dx || dy) {
+    el.style.left = ((parseFloat(el.style.left) || 0) + dx) + 'px';
+    el.style.top = ((parseFloat(el.style.top) || 0) + dy) + 'px';
+  }
+}
+
 /* 展开/收起大运流年流月 dropdown（横向排盘表，点击切换） */
 function toggleYunDropdown(key) {
   var dd = document.getElementById('dropdown-' + key);
@@ -881,14 +910,15 @@ function toggleYunDropdown(key) {
   }
 
   dd.appendChild(content);
+  document.body.appendChild(dd);  // 先挂到 DOM 才能量尺寸、再定位
 
   var toggle = document.querySelector('.col-' + key + ' .pillar-toggle');
   if (toggle) {
     var r = toggle.getBoundingClientRect();
     dd.style.left = (r.left + r.width / 2) + 'px';
     dd.style.top = (r.bottom + 8) + 'px';
+    clampFixedToViewport(dd);
   }
-  document.body.appendChild(dd);
 }
 
 /* 切换大运/流年/流月 */

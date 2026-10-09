@@ -296,8 +296,11 @@ img.term {
 .gather-popup {
   position: fixed;
   z-index: 400;
-  width: 300px;
+  width: 380px;
   max-width: calc(100vw - 20px);
+  max-height: calc(100vh - 20px);
+  display: flex;
+  flex-direction: column;
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 8px 30px rgba(0,0,0,0.22);
@@ -312,10 +315,10 @@ img.term {
 .gather-popup .gp-def { font-size: 15px; color: #333; margin-bottom: 10px; }
 .gather-popup .gp-pillar { margin: 8px 0; padding: 8px 10px; background: #f4f1ea; border-radius: 6px; font-size: 14px; color: #333; line-height: 1.6; }
 .gather-popup .gp-pillar-title { color: #0b0060; font-weight: 600; margin-right: 6px; }
-.gather-popup .gp-cites { border-top: 1px solid #eee; padding-top: 8px; }
-.gather-popup .gp-cite { margin-bottom: 6px; }
+.gather-popup .gp-cites { border-top: 1px solid #eee; padding-top: 8px; overflow-y: auto; min-height: 0; }
+.gather-popup .gp-cite { margin-bottom: 10px; }
 .gather-popup .gp-cite-book { display: block; font-size: 13px; color: #0b0060; font-weight: 600; }
-.gather-popup .gp-cite-text { font-size: 14px; color: #555; }
+.gather-popup .gp-cite-text { font-size: 14px; color: #555; line-height: 1.7; text-align: justify; }
 .gather-popup .gp-related { margin-top: 8px; font-size: 13px; color: #888; }
 .gather-popup .gp-related-item { color: #0b0060; cursor: pointer; text-decoration: underline; margin-right: 6px; }
 .gather-popup .gp-close { position: absolute; top: 8px; right: 10px; border: none; background: transparent; font-size: 20px; color: #bbb; cursor: pointer; line-height: 1; }
@@ -959,6 +962,8 @@ img.term {
   cursor: pointer;
 }
 .dim-arrow:hover { opacity: 1; }
+/* 维度按钮里选中的时间后缀（「流年：1999年」的「：1999年」），比主文字小一号 */
+.dim-sel { font-size: 0.6em; opacity: 0.85; white-space: nowrap; }
 
 /* ===== 紫微运限浮层 ===== */
 .ziwei-yun-dropdown {
