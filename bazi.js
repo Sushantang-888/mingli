@@ -1598,17 +1598,24 @@ function autoTagQuizCharts() {
   }
 }
 
-/* 把 2025 大赛题目自动写入对应命例的 chart.questions（若该命例还没录题目） */
+/* 把 2025 大赛题目自动写入对应命例的 chart.questions（按出生年月日匹配，名字不统一也能对上） */
 function importQuizQuestions2025() {
   if (typeof QUIZ_QUESTIONS_2025 === 'undefined') return;
   var charts = loadCharts();
   var changed = false;
-  Object.keys(QUIZ_QUESTIONS_2025).forEach(function (name) {
-    var c = charts.find(function (x) { return x.name === name; });
+  QUIZ_QUESTIONS_2025.forEach(function (entry) {
+    var b = entry.birth || {};
+    // 优先按出生年月日匹配，找不到再按名字匹配
+    var c = charts.find(function (x) {
+      return x.year === b.year && x.month === b.month && x.day === b.day;
+    });
+    if (!c && entry.name) {
+      c = charts.find(function (x) { return x.name === entry.name; });
+    }
     if (!c) return;
     if (!c.questions || !c.questions.length) {
-      c.questions = QUIZ_QUESTIONS_2025[name].questions;
-      if (QUIZ_QUESTIONS_2025[name].provider) c.provider = QUIZ_QUESTIONS_2025[name].provider;
+      c.questions = entry.questions;
+      if (entry.provider) c.provider = entry.provider;
       changed = true;
     }
   });

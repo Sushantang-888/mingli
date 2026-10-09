@@ -92,10 +92,21 @@ var QUIZ_BANK = [
     ]
   }
 ];
+
 /* 2025年第16届大赛 8 个命例的题目（图片识别，答案待补）
- * 页面加载时自动写入对应命例的 chart.questions */
-var QUIZ_QUESTIONS_2025 = {
-  "2025命例01": {
+ * 页面加载时按出生年月日匹配写入对应命例的 chart.questions（名字不匹配也能对上） */
+var QUIZ_QUESTIONS_2025 = [
+  {
+    "caseName": "2025命例01",
+    "gender": 0,
+    "birth": {
+      "year": 1951,
+      "month": 11,
+      "day": 14,
+      "hour": 10,
+      "minute": 0,
+      "city": "廣東"
+    },
     "provider": "方榮老師",
     "questions": [
       {
@@ -155,7 +166,17 @@ var QUIZ_QUESTIONS_2025 = {
       }
     ]
   },
-  "2025命例02": {
+  {
+    "caseName": "2025命例02",
+    "gender": 0,
+    "birth": {
+      "year": 1987,
+      "month": 7,
+      "day": 5,
+      "hour": 12,
+      "minute": 0,
+      "city": "香港"
+    },
     "provider": "丘智偉老師",
     "questions": [
       {
@@ -215,7 +236,17 @@ var QUIZ_QUESTIONS_2025 = {
       }
     ]
   },
-  "2025命例03": {
+  {
+    "caseName": "2025命例03",
+    "gender": 1,
+    "birth": {
+      "year": 1983,
+      "month": 4,
+      "day": 21,
+      "hour": 6,
+      "minute": 0,
+      "city": "日本宫崎县"
+    },
     "provider": "安公子老师",
     "questions": [
       {
@@ -275,7 +306,17 @@ var QUIZ_QUESTIONS_2025 = {
       }
     ]
   },
-  "2025命例04": {
+  {
+    "caseName": "2025命例04",
+    "gender": 1,
+    "birth": {
+      "year": 1993,
+      "month": 4,
+      "day": 8,
+      "hour": 23,
+      "minute": 34,
+      "city": "新加坡"
+    },
     "provider": "紫微斗数 上海 2023年冠军王哲佳(Julia)老师",
     "questions": [
       {
@@ -335,7 +376,17 @@ var QUIZ_QUESTIONS_2025 = {
       }
     ]
   },
-  "2025命例05": {
+  {
+    "caseName": "2025命例05",
+    "gender": 1,
+    "birth": {
+      "year": 1988,
+      "month": 1,
+      "day": 10,
+      "hour": 8,
+      "minute": 12,
+      "city": "马来西亚"
+    },
     "provider": "吴子震老师",
     "questions": [
       {
@@ -395,7 +446,17 @@ var QUIZ_QUESTIONS_2025 = {
       }
     ]
   },
-  "2025命例06": {
+  {
+    "caseName": "2025命例06",
+    "gender": 1,
+    "birth": {
+      "year": 1973,
+      "month": 8,
+      "day": 24,
+      "hour": 0,
+      "minute": 35,
+      "city": "马来西亚"
+    },
     "provider": "梁家豪(猫哥)",
     "questions": [
       {
@@ -455,7 +516,17 @@ var QUIZ_QUESTIONS_2025 = {
       }
     ]
   },
-  "2025命例07": {
+  {
+    "caseName": "2025命例07",
+    "gender": 0,
+    "birth": {
+      "year": 1988,
+      "month": 2,
+      "day": 15,
+      "hour": 16,
+      "minute": 50,
+      "city": "台灣"
+    },
     "provider": "沈建軍老師",
     "questions": [
       {
@@ -515,7 +586,17 @@ var QUIZ_QUESTIONS_2025 = {
       }
     ]
   },
-  "2025命例08": {
+  {
+    "caseName": "2025命例08",
+    "gender": 1,
+    "birth": {
+      "year": 1970,
+      "month": 7,
+      "day": 22,
+      "hour": 15,
+      "minute": 0,
+      "city": "北京"
+    },
     "provider": "張燦梁老師",
     "questions": [
       {
@@ -575,4 +656,4 @@ var QUIZ_QUESTIONS_2025 = {
       }
     ]
   }
-};
+];
