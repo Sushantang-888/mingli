@@ -554,6 +554,19 @@ img.term {
 .chart-item-actions button:hover { background: #f5f5f5; }
 .chart-edit-btn { color: #999; }
 .chart-edit-btn:hover { color: #0b0060; background: #f0edf8 !important; }
+.chart-ai-btn {
+  font-size: 12px;
+  padding: 4px 10px;
+  border: 1px solid #7c4dff;
+  border-radius: 4px;
+  background: #f3eeff;
+  color: #7c4dff;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.chart-ai-btn:hover { background: #ece3ff; }
+.chart-ai-btn:disabled { opacity: 0.5; cursor: default; }
 
 /* 编辑命例弹窗里的年月日时分网格 */
 .modal-grid {
@@ -802,6 +815,19 @@ img.term {
 }
 .quiz-my-answer:hover { background: #eefaf1; }
 .quiz-my-answer.done { background: #27ae60; color: #fff; border-color: #27ae60; }
+.quiz-ai-solve {
+  flex-shrink: 0;
+  font-size: 13px;
+  padding: 5px 12px;
+  border: 1px solid #7c4dff;
+  border-radius: 100px;
+  background: #f3eeff;
+  color: #7c4dff;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.quiz-ai-solve:hover { background: #ece3ff; }
 
 /* 大赛命例题目录入按钮（不足 5 道时显示） */
 .quiz-import-btns {
@@ -896,6 +922,11 @@ img.term {
 }
 .modal-opt-btn:hover { border-color: #0b0060; background: #f0edf8; }
 .modal-opt-btn.active { border-color: #27ae60; background: #eefaf1; color: #27ae60; font-weight: 600; }
+/* AI 试解 / 命例解析结果 */
+.ai-answer { font-size: 17px; margin: 12px 0; color: #0b0060; }
+.ai-answer b { color: #c0392b; }
+.ai-reason { font-size: 14px; color: #333; line-height: 1.7; margin-bottom: 10px; }
+.ai-ref { font-size: 13px; color: #666; line-height: 1.7; background: #f7f5f0; padding: 10px 12px; border-radius: 6px; }
 .quiz-year-note {
   color: #999999;
   font-size: 13px;

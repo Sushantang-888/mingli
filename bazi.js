@@ -1796,6 +1796,7 @@ function renderQuizQuestions(chart) {
     html += '<div class="quiz-q-topic">Q' + q.no + ' · ' + annotateYears(q.topic, CURRENT_DATA) + '</div>';
     // 右侧按钮组：我的答案 + 正确答案（添加/编辑）
     html += '<div class="quiz-q-actions">';
+    html += '<button class="quiz-ai-solve" onclick="aiTrySolve(' + chart.id + ', ' + q.no + ')">AI 试解</button>';
     html += '<button class="quiz-my-answer' + (q.myAnswer ? ' done' : '') + '" onclick="openMyAnswerPicker(' + chart.id + ', ' + q.no + ')">我的答案' + (q.myAnswer ? ' ✅' : '') + '</button>';
     if (q.answer) {
       html += '<button class="quiz-edit-q" title="编辑题目和正确答案" onclick="openQuizQuestionEditor(' + chart.id + ', ' + q.no + ')">✎</button>';
@@ -2218,6 +2219,9 @@ function renderChartList() {
     html += '<span class="chart-item-info">' + genderText + ' · ' + dateText + ' · ' + c.city + '</span>';
     html += '<span class="chart-item-actions">';
     html += '<button class="chart-edit-btn" title="编辑命例" onclick="editChart(' + c.id + ')">✎</button>';
+    if (!c.batchNote || !c.batchNote.length) {
+      html += '<button class="chart-ai-btn"' + (AI_ANALYZING[c.id] ? ' disabled' : '') + ' onclick="aiAnalyzeChart(' + c.id + ')">' + (AI_ANALYZING[c.id] ? '解析中…' : '基础命例解析') + '</button>';
+    }
     html += '<button onclick="applyChartById(' + c.id + ')">载入</button>';
     html += '<button onclick="deleteChart(' + c.id + ')">删除</button>';
     html += '</span>';
@@ -2263,11 +2267,174 @@ function importCharts(input) {
 }
 
 /* ============================================================
+ * 基础命例解析（DeepSeek 生成命理批注）
+ * ============================================================ */
+var AI_ANALYZING = {};  // 正在解析的命例 id → true（防重复点击）
+
+/* 把命例的出生数据跑成排盘，整理成给 DeepSeek 的文本 */
+function buildBaziText(chart, data) {
+  data = data || calcBazi(chart.year, chart.month, chart.day, chart.hour, chart.minute, chart.gender);
+  var p = data.pillars;
+  var labels = { year: '年柱', month: '月柱', day: '日柱', time: '时柱' };
+  var lines = [];
+  lines.push('性别：' + data.genderText);
+  ['year', 'month', 'day', 'time'].forEach(function (k) {
+    var pill = p[k];
+    lines.push(labels[k] + '：' + pill.gan + pill.zhi + '（天干十神=' + pill.ganShiShen + '，地支藏干=' + pill.hideGan.join('') + '/' + pill.hideShiShen.join('') + '）');
+  });
+  lines.push('日主：' + p.day.gan + p.day.zhi + '，纳音：' + data.naYin + '，日柱空亡：' + data.xunKong);
+  var ss = [];
+  ['year', 'month', 'day', 'time'].forEach(function (k) {
+    var arr = data.shenSha[k] || [];
+    if (arr.length) ss.push(labels[k] + '神煞：' + arr.map(function (x) { return x.name; }).join('、'));
+  });
+  if (ss.length) lines.push(ss.join('；'));
+  if (data.xingChong && data.xingChong.length) {
+    lines.push('刑冲破害合：' + data.xingChong.map(function (r) { return p[r.a].zhi + p[r.b].zhi + '=' + r.types.join('/'); }).join('；'));
+  }
+  if (data.ganHe && data.ganHe.length) {
+    lines.push('天干五合：' + data.ganHe.map(function (r) { return p[r.a].gan + p[r.b].gan + '合' + r.wuXing; }).join('；'));
+  }
+  lines.push('大运：' + data.daYunList.slice(0, 8).map(function (d) { return d.ganZhi + '(' + d.startYear + '~' + d.endYear + ')'; }).join(' → '));
+  return lines.join('\n');
+}
+
+/* 调 DeepSeek 生成命理批注，存到命例 batchNote */
+function aiAnalyzeChart(id) {
+  var chart = quizChartById(id);
+  if (!chart) return;
+  if (AI_ANALYZING[id]) return;
+  AI_ANALYZING[id] = true;
+  renderChartList();
+  showToast('开始解析「' + chart.name + '」…');
+
+  var prompt = '你是资深命理师。根据以下八字排盘信息，做基础命理批注。只输出 JSON 数组（不要其他文字）：\n' +
+    '[{"title":"父母","content":"..."},{"title":"兄弟姐妹","content":"..."},{"title":"子女","content":"..."},{"title":"婚姻","content":"..."},{"title":"学历","content":"..."},{"title":"性格","content":"..."},{"title":"格局高低","content":"..."},{"title":"喜用神","content":"..."}]\n' +
+    '每个 content 用通俗中文 80~120 字，基于子平格局法分析（含喜用神判断）。\n\n排盘信息：\n' + buildBaziText(chart);
+
+  fetch(DEEPSEEK_PROXY, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'deepseek-chat',
+      messages: [{ role: 'user', content: prompt }]
+    })
+  })
+  .then(function (r) {
+    if (!r.ok) return r.text().then(function (t) { throw new Error('HTTP ' + r.status + '：' + t.slice(0, 200)); });
+    return r.json();
+  })
+  .then(function (data) {
+    var content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+    if (!content) throw new Error('返回为空');
+    var m = content.match(/\[[\s\S]*\]/);
+    var sections = JSON.parse(m ? m[0] : content);
+    if (!Array.isArray(sections)) throw new Error('返回不是数组');
+    var c = quizChartById(id);
+    if (!c) return;
+    c.batchNote = sections;
+    var charts = loadCharts();
+    for (var i = 0; i < charts.length; i++) { if (charts[i].id === id) { charts[i] = c; break; } }
+    persistCharts(charts);
+    if (CURRENT_CHART && CURRENT_CHART.id === id) { CURRENT_CHART = c; renderBatchNote(); }
+    showToast('解析完成');
+  })
+  .catch(function (err) {
+    alert('解析失败：' + err.message);
+  })
+  .finally(function () {
+    delete AI_ANALYZING[id];
+    renderChartList();
+  });
+}
+
+/* AI 试解：把排盘 + 题目 + 年份大运流年喂给 DeepSeek，试解一道大赛题 */
+var AI_SOLVING = {};
+function aiTrySolve(chartId, no) {
+  var chart = quizChartById(chartId);
+  if (!chart) return;
+  var qz = getQuizQuestions(chart);
+  var q = (qz.questions || []).find(function (x) { return x.no === no; });
+  if (!q) return;
+  var key = chartId + '-' + no;
+  if (AI_SOLVING[key]) return;
+  AI_SOLVING[key] = true;
+
+  var data = calcBazi(chart.year, chart.month, chart.day, chart.hour, chart.minute, chart.gender);
+  var context = buildBaziText(chart, data);
+  context += '\n\n题目：' + q.topic;
+  context += '\n选项：' + q.options.join('；');
+
+  var years = (q.topic + ' ' + q.options.join(' ')).match(/(19|20)\d{2}/g);
+  if (years) {
+    var seen = {}, extra = [];
+    years.forEach(function (ys) {
+      var y = parseInt(ys, 10);
+      if (seen[y]) return;
+      seen[y] = true;
+      var info = getYunInfo(y, data);
+      if (info) extra.push(y + '年=' + info.label);
+    });
+    if (extra.length) context += '\n题目涉及的年份大运流年：' + extra.join('；');
+  }
+
+  var prompt = '你是资深命理师。根据八字排盘和题目，试解这道题。只输出 JSON（不要其他文字）：{"answer":"A/B/C/D","reason":"原因分析","reference":"依据的古文原文或参考文章"}。\nreason 100字内说明判断依据；reference 给出牵扯到的古文原文（如三命通会/滴天髓/渊海子平等）或可参考的文章出处。\n\n' + context;
+
+  showToast('AI 试解中…');
+
+  fetch(DEEPSEEK_PROXY, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'deepseek-reasoner',
+      messages: [{ role: 'user', content: prompt }]
+    })
+  })
+  .then(function (r) {
+    if (!r.ok) return r.text().then(function (t) { throw new Error('HTTP ' + r.status + '：' + t.slice(0, 200)); });
+    return r.json();
+  })
+  .then(function (data) {
+    var content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+    if (!content) throw new Error('返回为空');
+    var m = content.match(/\{[\s\S]*\}/);
+    var res = JSON.parse(m ? m[0] : content);
+    openModal(
+      '<div class="modal-title">AI 试解 Q' + no + '</div>' +
+      '<div class="modal-sub">' + escapeHtml(q.topic) + '</div>' +
+      '<div class="ai-answer">1. 答案：<b>' + escapeHtml(res.answer || '?') + '</b></div>' +
+      '<div class="ai-reason">2. 原因：' + escapeHtml(res.reason || '').replace(/\n/g, '<br>') + '</div>' +
+      '<div class="ai-ref">3. 古文原文 / 参考：' + escapeHtml(res.reference || res.references || '').replace(/\n/g, '<br>') + '</div>' +
+      '<div class="modal-actions"><button class="modal-btn" onclick="closeModal()">关闭</button></div>'
+    );
+  })
+  .catch(function (err) {
+    alert('AI 试解失败：' + err.message);
+  })
+  .finally(function () {
+    delete AI_SOLVING[key];
+  });
+}
+
+/* ============================================================
  * 批注（子平格局 + 盲派过三关 + 调候）
  * ============================================================ */
 function renderBatchNote() {
   var el = document.getElementById('batch-note');
   if (!el) return;
+
+  // 优先展示命例的 AI 批注（batchNote）
+  if (CURRENT_CHART && CURRENT_CHART.batchNote && CURRENT_CHART.batchNote.length) {
+    var aiHtml = '<div class="batch-title">命理批注</div>';
+    CURRENT_CHART.batchNote.forEach(function (s) {
+      aiHtml += '<div class="batch-section">';
+      aiHtml += '<div class="batch-heading">' + escapeHtml(s.title) + '</div>';
+      aiHtml += '<div class="batch-text">' + escapeHtml(s.content).replace(/\n/g, '<br>') + '</div>';
+      aiHtml += '</div>';
+    });
+    el.innerHTML = aiHtml;
+    return;
+  }
 
   var year = parseInt(document.getElementById('in-year').value, 10);
   var now = new Date();
