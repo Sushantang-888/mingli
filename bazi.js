@@ -1193,6 +1193,7 @@ window.addEventListener('DOMContentLoaded', function () {
   fillCityList();
   importQuizBank();
   autoTagQuizCharts();  // 一次性把「xx年命例」普通命例批量转成大赛命例
+  importQuizQuestions2025();  // 把 2025 大赛题目写入对应命例
   baziPaipan();
   renderChartList();
   refreshSupabaseUser();
@@ -1595,6 +1596,23 @@ function autoTagQuizCharts() {
     persistCharts(charts);
     renderChartList();
   }
+}
+
+/* 把 2025 大赛题目自动写入对应命例的 chart.questions（若该命例还没录题目） */
+function importQuizQuestions2025() {
+  if (typeof QUIZ_QUESTIONS_2025 === 'undefined') return;
+  var charts = loadCharts();
+  var changed = false;
+  Object.keys(QUIZ_QUESTIONS_2025).forEach(function (name) {
+    var c = charts.find(function (x) { return x.name === name; });
+    if (!c) return;
+    if (!c.questions || !c.questions.length) {
+      c.questions = QUIZ_QUESTIONS_2025[name].questions;
+      if (QUIZ_QUESTIONS_2025[name].provider) c.provider = QUIZ_QUESTIONS_2025[name].provider;
+      changed = true;
+    }
+  });
+  if (changed) { persistCharts(charts); renderChartList(); }
 }
 
 /* 手动把某个命例标成大赛命例（兜底，不依赖命名） */
