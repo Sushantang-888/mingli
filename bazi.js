@@ -1995,28 +1995,9 @@ function submitManualQuestion() {
   showToast('已保存 Q' + no);
 }
 
-/* ============ DeepSeek（图片识别题目 + 后续解读） ============ */
-var DEEPSEEK_KEY = localStorage.getItem('deepseek_api_key') || '';
+/* ============ DeepSeek 代理（key 存 Supabase 服务器，前端不接触） ============ */
+var DEEPSEEK_PROXY = 'https://yzgjgprsvcduddqbwmdh.supabase.co/functions/v1/deepseek';
 var QUIZ_IMAGE_DATA = null;  // 当前上传的图片 base64
-
-function openDeepseekSetting() {
-  openModal(
-    '<div class="modal-title">🔑 DeepSeek 设置</div>' +
-    '<div class="modal-sub">填入 DeepSeek API key（platform.deepseek.com 获取），用于图片识别题目</div>' +
-    '<input class="modal-input" id="ds-key" type="password" placeholder="sk-..." value="' + escapeHtml(DEEPSEEK_KEY) + '">' +
-    '<div class="modal-actions">' +
-    '<button class="modal-btn" onclick="closeModal()">取消</button>' +
-    '<button class="modal-btn primary" onclick="submitDeepseekKey()">保存</button>' +
-    '</div>'
-  );
-}
-function submitDeepseekKey() {
-  var k = document.getElementById('ds-key').value.trim();
-  DEEPSEEK_KEY = k;
-  localStorage.setItem('deepseek_api_key', k);
-  closeModal();
-  showToast('已保存 DeepSeek key');
-}
 
 /* 图片录入题目：上传截图 → DeepSeek 识别 → 录入 */
 function openQuizImageImport() {
@@ -2026,11 +2007,10 @@ function openQuizImageImport() {
   QUIZ_IMAGE_DATA = null;
   openModal(
     '<div class="modal-title">🖼 图片录入题目</div>' +
-    '<div class="modal-sub">上传大赛题目截图，点「解析」自动识别成题目（需先设置 DeepSeek key）</div>' +
+    '<div class="modal-sub">上传大赛题目截图，点「解析」自动识别成题目</div>' +
     '<input type="file" accept="image/*" class="modal-input" onchange="previewQuizImage(this)">' +
     '<div id="quiz-img-preview"></div>' +
     '<div class="modal-actions">' +
-    '<button class="modal-btn" onclick="openDeepseekSetting()">🔑 设置 Key</button>' +
     '<button class="modal-btn" onclick="closeModal()">取消</button>' +
     '<button class="modal-btn primary" id="quiz-parse-btn" onclick="parseQuizImage()">解析</button>' +
     '</div>'
@@ -2049,15 +2029,14 @@ function previewQuizImage(input) {
 }
 function parseQuizImage() {
   if (!QUIZ_IMAGE_DATA) { alert('请先上传图片'); return; }
-  if (!DEEPSEEK_KEY) { alert('请先设置 DeepSeek key（点「🔑 设置 Key」）'); return; }
   var btn = document.getElementById('quiz-parse-btn');
   if (btn) { btn.disabled = true; btn.textContent = '解析中…'; }
 
   var prompt = '识别图片中的所有题目。每道题包含：题干 + A/B/C/D 四个选项。输出 JSON 数组：\n[{"no":1,"topic":"题干","options":["A选项","B选项","C选项","D选项"],"answer":null}]\n若图片标注了正确答案则填 answer 为 A/B/C/D，否则为 null。只输出 JSON，不要其他文字。';
 
-  fetch('https://api.deepseek.com/chat/completions', {
+  fetch(DEEPSEEK_PROXY, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + DEEPSEEK_KEY },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'deepseek-flash',
       messages: [
@@ -2089,7 +2068,7 @@ function parseQuizImage() {
     showToast('已识别录入 ' + qs.length + ' 道题');
   })
   .catch(function (err) {
-    alert('解析失败：' + err.message + '\n\n若提示 CORS / Failed to fetch（跨域被拦），说明需要加一层代理，我下一步处理。');
+    alert('解析失败：' + err.message);
   })
   .finally(function () {
     if (btn) { btn.disabled = false; btn.textContent = '解析'; }
