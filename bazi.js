@@ -1368,20 +1368,62 @@ function persistCharts(charts) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(charts));
 }
 
-/* 去重：同名命例合并（保留批注），避免题库命例重复两套 */
+/* 合并两个同名命例：把 extra 的题目/答案/我的答案/AI试解/评分等合并进 base（base 已有的非空值不覆盖） */
+function mergeChartInto(base, extra) {
+  // 批注
+  if (extra.quizNotes) {
+    if (!base.quizNotes) base.quizNotes = {};
+    Object.keys(extra.quizNotes).forEach(function (k) {
+      if (!base.quizNotes[k]) base.quizNotes[k] = extra.quizNotes[k];
+    });
+  }
+  // 题目：逐题合并（extra 的题有答案/字段就补进 base）
+  if (extra.questions && extra.questions.length) {
+    if (!base.questions || !base.questions.length) {
+      base.questions = extra.questions;
+    } else {
+      extra.questions.forEach(function (eq) {
+        var bq = base.questions.find(function (x) { return x.no === eq.no; });
+        if (!bq) { base.questions.push(eq); }
+        else {
+          if (eq.answer) bq.answer = eq.answer;
+          if (eq.topic && !bq.topic) bq.topic = eq.topic;
+          if (eq.options && eq.options.length) bq.options = eq.options;
+        }
+      });
+      base.questions.sort(function (a, b) { return a.no - b.no; });
+    }
+  }
+  // 我的答案
+  if (extra.myAnswers) {
+    if (!base.myAnswers) base.myAnswers = {};
+    Object.keys(extra.myAnswers).forEach(function (k) {
+      if (!base.myAnswers[k]) base.myAnswers[k] = extra.myAnswers[k];
+    });
+  }
+  // AI 试解
+  if (extra.aiAnswers) {
+    if (!base.aiAnswers) base.aiAnswers = {};
+    Object.keys(extra.aiAnswers).forEach(function (k) {
+      if (!base.aiAnswers[k]) base.aiAnswers[k] = extra.aiAnswers[k];
+    });
+  }
+  // 命理解析批注
+  if (extra.batchNote && extra.batchNote.length) base.batchNote = extra.batchNote;
+  if (extra.rawText) base.rawText = extra.rawText;
+  if (extra.isQuiz) base.isQuiz = true;
+  if (extra.provider && !base.provider) base.provider = extra.provider;
+  return base;
+}
+
+/* 去重：同名命例合并（保留双方数据），避免题库命例重复两套 */
 function dedupeCharts(charts) {
   var seen = {};
   var result = [];
   charts.forEach(function (c) {
     var existing = seen[c.name];
     if (existing) {
-      if (c.quizNotes) {
-        if (!existing.quizNotes) existing.quizNotes = {};
-        Object.keys(c.quizNotes).forEach(function (k) {
-          if (!existing.quizNotes[k]) existing.quizNotes[k] = c.quizNotes[k];
-        });
-      }
-      if (c.isQuiz) existing.isQuiz = true;
+      mergeChartInto(existing, c);
     } else {
       seen[c.name] = c;
       result.push(c);
@@ -1703,6 +1745,7 @@ function persistQuizChart(chart) {
     renderQuizQuestions(chart);
   }
   renderChartList();
+  syncChartToCloud(chart);  // 题目/答案/我的答案/AI试解 改动自动上云
 }
 
 /* 下一道题的编号 */
@@ -2485,6 +2528,7 @@ function persistBatchNote(chart) {
     CURRENT_CHART = chart;
     renderBatchNote();
   }
+  syncChartToCloud(chart);  // 评分/评价/Ask AI 结果 改动自动上云
 }
 
 /* 评价纠错：星级 + 评价（≤1000字/展示≤6行）+ 保存 */
