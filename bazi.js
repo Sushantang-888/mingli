@@ -1338,16 +1338,22 @@ async function mergeChartsFromCloud() {
   renderChartList();
 }
 
-/* 一键上传本地命例到云端（手动命例首次上云用） */
+/* 一键上传本地所有命例到云端（含大赛命例的题目/答案/我的答案/AI试解/评分） */
 async function uploadAllChartsToCloud() {
   if (!SUPABASE || !SUPABASE_USER) { alert('请先登录 GitHub'); return; }
   var charts = loadCharts();
-  var manual = charts.filter(function (c) { return !c.isQuiz; });
-  if (!manual.length) { alert('没有可上传的手动命例'); return; }
-  for (var i = 0; i < manual.length; i++) {
-    await syncChartToCloud(manual[i]);
+  if (!charts.length) { alert('没有可上传的命例'); return; }
+  for (var i = 0; i < charts.length; i++) {
+    await syncChartToCloud(charts[i]);
   }
-  alert('已上传 ' + manual.length + ' 个命例到云端');
+  alert('已上传 ' + charts.length + ' 个命例到云端');
+}
+
+/* 从云端拉取命例合并到本地（跨设备同步用） */
+async function syncChartsFromCloud() {
+  if (!SUPABASE || !SUPABASE_USER) { alert('请先登录 GitHub'); return; }
+  await mergeChartsFromCloud();
+  alert('已从云端同步');
 }
 
 /* ============================================================
