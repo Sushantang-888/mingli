@@ -1171,24 +1171,11 @@ var DIRTY = false;     // 是否有未保存的输入改动
 var PAIPANED = false;  // 是否点过排盘
 
 function updateInputSummary() {
-  // 第一行：命例名称（改了输入但未保存时显示「未命名命例」）
+  // 命例名称（改了输入但未保存时显示「未命名命例」）
   var nameEl = document.getElementById('input-chart-name');
   if (nameEl) {
     nameEl.textContent = (DIRTY || !CURRENT_CHART || !CURRENT_CHART.name) ? '未命名命例' : CURRENT_CHART.name;
   }
-  // 第二行：出生数据汇总
-  var el = document.getElementById('input-summary-text');
-  if (!el) return;
-  var y = document.getElementById('in-year').value;
-  var mo = document.getElementById('in-month').value;
-  var d = document.getElementById('in-day').value;
-  var h = document.getElementById('in-hour').value;
-  var mi = document.getElementById('in-minute').value;
-  var city = document.getElementById('in-city').value;
-  var g = document.getElementById('in-gender').value;
-  var gender = (g === '1') ? '乾造' : '坤造';
-  var mm = (mi.length === 1) ? '0' + mi : mi;
-  el.textContent = y + '年' + mo + '月' + d + '日 ' + h + ':' + mm + ' · ' + city + ' · ' + gender;
 }
 
 /* 按钮显隐：排盘(改了输入框才出现) + 保存(点排盘后才出现) */
