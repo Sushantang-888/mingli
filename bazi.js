@@ -1200,16 +1200,22 @@ function toggleInputEdit() {
   if (p) p.classList.toggle('editing');
 }
 
-/* 页面加载后，填充城市列表并先排一个示例 */
+/* 页面加载后，填充城市列表并默认载入「我」命例 */
 window.addEventListener('DOMContentLoaded', function () {
   fillCityList();
   importQuizBank();
   autoTagQuizCharts();  // 一次性把「xx年命例」普通命例批量转成大赛命例
   importQuizQuestions2025();  // 把 2025 大赛题目写入对应命例
-  baziPaipan();
   renderChartList();
   refreshSupabaseUser();
-  // 输入区汇总行：绑定输入变化监听 + 初始显示
+  // 默认命例：优先载入「我」，找不到则用输入框默认值排盘
+  var me = loadCharts().find(function (c) { return c.name === '我'; });
+  if (me) {
+    applyChart(me);
+  } else {
+    baziPaipan();
+  }
+  // 输入区：绑定输入变化监听
   ['in-year', 'in-month', 'in-day', 'in-hour', 'in-minute', 'in-city', 'in-gender'].forEach(function (id) {
     var el = document.getElementById(id);
     if (el) el.addEventListener('input', onInputChange);
