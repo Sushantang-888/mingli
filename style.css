@@ -81,8 +81,20 @@ body {
   box-sizing: border-box;
 }
 #in-year { width: 62px; }
-#in-city { width: 80px; }
+#in-city { width: 96px; }
 #in-gender { width: auto; }
+/* 输入框内单位（年/月/日/时/分/城市 常驻右侧） */
+.in-unit { position: relative; display: inline-flex; align-items: center; }
+.in-unit input { padding-right: 22px; }
+.in-unit i {
+  position: absolute;
+  right: 8px;
+  font-style: normal;
+  font-size: 13px;
+  color: #999;
+  pointer-events: none;
+}
+.in-unit-city input { padding-right: 36px; }
 .input-panel button {
   font-size: 15px;
   padding: 8px 16px;
