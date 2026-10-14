@@ -609,12 +609,9 @@ img.term {
 
 /* 批注 */
 .batch-note {
-  max-width: 1080px;
-  margin: 24px auto;
-  background: #fff;
-  border-radius: 10px;
-  padding: 28px 32px;
-  box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+  margin: 16px 20px 0;
+  padding: 16px 0 4px;
+  border-top: 1px solid #f0f0f0;
 }
 .batch-title {
   font-size: 22px;
@@ -705,21 +702,8 @@ img.term {
   }
 }
 
-/* 排盘 + 题目/批注：大屏（≥1800px）左右，小屏上下 */
+/* 排盘 + 题目/批注：批注已融在盘内，quiz-layout 自己处理大赛题的左右 */
 .content-layout { display: block; }
-@media (min-width: 1800px) {
-  .content-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
-    gap: 24px;
-    align-items: start;
-  }
-  .content-layout .batch-note { margin: 0; }
-  /* 大赛题（quiz-layout 本身已左右）时不拆，批注仍在下方 */
-  .content-layout:has(.quiz-layout.is-quiz) {
-    grid-template-columns: 1fr;
-  }
-}
 
 /* 大赛标签 + 题目 */
 .quiz-tag {
