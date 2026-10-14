@@ -84,6 +84,13 @@ body {
 #in-city { width: 118px; }
 #in-gender { width: auto; }
 /* 输入框内单位（年/月/日/时/分/城市 常驻右侧） */
+/* 隐藏 number 输入框自带的上下箭头，避免和单位重叠 */
+.input-panel input[type=number]::-webkit-inner-spin-button,
+.input-panel input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.input-panel input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 .in-unit { position: relative; display: inline-flex; align-items: center; }
 .in-unit input { padding-right: 24px; }
 .in-unit i {
