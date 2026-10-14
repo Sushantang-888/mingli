@@ -73,28 +73,29 @@ body {
 .input-panel input,
 .input-panel select {
   font-size: 15px;
-  padding: 6px 8px;
+  padding: 6px 10px;
   border: 1px solid #ddd;
   border-radius: 6px;
-  width: 48px;
+  width: 64px;
   font-family: inherit;
   box-sizing: border-box;
 }
-#in-year { width: 62px; }
-#in-city { width: 96px; }
+#in-year { width: 80px; }
+#in-city { width: 118px; }
 #in-gender { width: auto; }
 /* 输入框内单位（年/月/日/时/分/城市 常驻右侧） */
 .in-unit { position: relative; display: inline-flex; align-items: center; }
-.in-unit input { padding-right: 22px; }
+.in-unit input { padding-right: 24px; }
 .in-unit i {
   position: absolute;
-  right: 8px;
+  right: 9px;
   font-style: normal;
   font-size: 13px;
-  color: #999;
+  color: #aaa;
   pointer-events: none;
+  white-space: nowrap;
 }
-.in-unit-city input { padding-right: 36px; }
+.in-unit-city input { padding-right: 40px; }
 .input-panel button {
   font-size: 15px;
   padding: 8px 16px;
