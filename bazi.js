@@ -1171,10 +1171,12 @@ var DIRTY = false;     // 是否有未保存的输入改动
 var PAIPANED = false;  // 是否点过排盘
 
 function updateInputSummary() {
-  // 命例名称（改了输入但未保存时显示「未命名命例」）
+  // 命例名称（改了输入但未保存时显示「未命名命例」，大赛命例加「赛」标签）
   var nameEl = document.getElementById('input-chart-name');
   if (nameEl) {
-    nameEl.textContent = (DIRTY || !CURRENT_CHART || !CURRENT_CHART.name) ? '未命名命例' : CURRENT_CHART.name;
+    var name = (DIRTY || !CURRENT_CHART || !CURRENT_CHART.name) ? '未命名命例' : CURRENT_CHART.name;
+    var isQuiz = !DIRTY && CURRENT_CHART && CURRENT_CHART.isQuiz;
+    nameEl.innerHTML = (isQuiz ? '<span class="quiz-tag">赛</span>' : '') + escapeHtml(name);
   }
 }
 
