@@ -2293,11 +2293,14 @@ function escapeHtml(s) {
 }
 
 function deleteChart(id) {
-  if (!confirm('确定删除这个命例？')) return;
   var chart = loadCharts().find(function (c) { return c.id === id; });
+  if (!chart) return;
+  // 两次二次确认，防误删
+  if (!confirm('确定删除命例「' + chart.name + '」？')) return;
+  if (!confirm('删除后无法恢复（本地和云端都会删），确定吗？')) return;
   persistCharts(loadCharts().filter(function (c) { return c.id !== id; }));
   renderChartList();
-  if (chart) deleteChartFromCloud(chart.name);  // 云端也删
+  deleteChartFromCloud(chart.name);  // 云端也删
 }
 
 /* 渲染命例列表 */
