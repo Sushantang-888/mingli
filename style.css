@@ -52,11 +52,36 @@ body {
   border-radius: 10px;
   padding: 20px 24px;
   display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  align-items: flex-end;
+  flex-direction: column;
+  gap: 12px;
   box-shadow: 0 1px 6px rgba(0,0,0,0.05);
 }
+/* 第一行：命例名称 */
+.input-chart-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+/* 第二行：出生数据汇总（点击展开编辑区） */
+.input-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 18px;
+  color: #555;
+  line-height: 1.4;
+}
+.input-summary-text { flex: 1; }
+.input-edit-icon { font-size: 18px; color: #0b0060; flex-shrink: 0; }
+/* 编辑区（默认折叠，点汇总行展开） */
+.input-fields {
+  display: none;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+.input-panel.editing .input-fields { display: flex; }
 .input-panel label {
   display: flex;
   flex-direction: column;
@@ -73,7 +98,13 @@ body {
   min-width: 96px;
   font-family: inherit;
 }
-.input-panel button {
+/* 第三行：按钮 + 登录状态 */
+.input-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.input-actions button {
   font-size: 16px;
   padding: 9px 22px;
   border: none;
@@ -83,52 +114,46 @@ body {
   cursor: pointer;
   font-family: inherit;
 }
-.input-panel button:hover { background: #1a1490; }
-
-/* 输入区汇总行：桌面隐藏，手机版显示「一行字 + 编辑 icon」 */
-.input-summary {
-  display: none;
+.input-actions button:hover { background: #1a1490; }
+.input-actions .save-btn { background: #0b7a3e; }
+.input-actions .save-btn:hover { background: #0d8a47; }
+/* 登录状态：放右边，未登录=显著可点击，已登录=淡灰文字+退出icon */
+.login-btn {
+  margin-left: auto;
+  font-size: 15px;
+  padding: 8px 18px;
+  border: 1px solid #0b0060;
+  border-radius: 6px;
+  background: #fff;
+  color: #0b0060;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
 }
+.login-btn:hover { background: #f0edf8; }
+.login-btn.logged-in {
+  padding: 4px 0;
+  border: none;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.login-btn.logged-in:hover { background: transparent; }
+.login-btn .login-name { color: #999; }
+.login-btn .login-out {
+  font-size: 15px;
+  color: #bbb;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.login-btn .login-out:hover { color: #c0392b; background: #f0f0f0; }
 
-/* 手机版输入区：汇总行 + 折叠输入框 + 按钮缩放 */
+/* 手机版：按钮缩放 */
 @media (max-width: 768px) {
-  .input-panel {
-    padding: 14px 16px;
-    gap: 12px;
-  }
-  .input-summary {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-basis: 100%;
-    cursor: pointer;
-    font-size: 20px;
-    color: #1a1a1a;
-    line-height: 1.3;
-  }
-  .input-summary-text {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .input-edit-icon {
-    font-size: 22px;
-    color: #0b0060;
-    flex-shrink: 0;
-  }
-  /* 折叠时隐藏 6 个输入框，点编辑 icon 展开 */
-  .input-panel:not(.editing) > label {
-    display: none;
-  }
-  .input-panel.editing > label {
-    display: flex;
-  }
-  /* 4 个按钮随屏幕缩放：最小字号 20px、内间距左右 20px / 上下 8px */
-  .input-panel button {
-    font-size: 20px;
-    padding: 8px 20px;
-  }
+  .input-panel { padding: 14px 16px; gap: 10px; }
+  .input-actions button { font-size: 18px; padding: 8px 16px; }
 }
 
 /* ---------- 排盘面板（白色大卡片：含八字/紫微 Tab + 排盘内容） ---------- */

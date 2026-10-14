@@ -4,46 +4,51 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>命理排盘 · 八字 + 紫微</title>
-  <link rel="stylesheet" href="style.css?v=28">
+  <link rel="stylesheet" href="style.css?v=29">
 </head>
 <body>
   <div class="page">
 
-    <!-- 输入区（共享） -->
+    <!-- 输入区（共享）：三行卡片 = 命例名称 / 出生数据汇总 / 按钮+登录状态 -->
     <div class="input-panel" id="input-panel">
+      <div class="input-chart-name" id="input-chart-name">未命名命例</div>
       <div class="input-summary" id="input-summary" onclick="toggleInputEdit()">
         <span class="input-summary-text" id="input-summary-text"></span>
         <span class="input-edit-icon">✎</span>
       </div>
-      <label>年
-        <input id="in-year" type="number" min="1900" max="2100" value="1991" placeholder="1991">
-      </label>
-      <label>月
-        <input id="in-month" type="number" min="1" max="12" value="9" placeholder="9">
-      </label>
-      <label>日
-        <input id="in-day" type="number" min="1" max="31" value="23" placeholder="23">
-      </label>
-      <label>时
-        <input id="in-hour" type="number" min="0" max="23" value="16" placeholder="16">
-      </label>
-      <label>分
-        <input id="in-minute" type="number" min="0" max="59" value="30" placeholder="30">
-      </label>
-      <label>城市
-        <input id="in-city" list="city-list" value="常州" placeholder="输入城市">
-        <datalist id="city-list"></datalist>
-      </label>
-      <label>性别
-        <select id="in-gender">
-          <option value="0">女（坤造）</option>
-          <option value="1">男（乾造）</option>
-        </select>
-      </label>
-      <button onclick="doPaipanAll()">排盘</button>
-      <button onclick="saveChart()">保存命例</button>
-      <button onclick="toggleChartList()">切换命例</button>
-      <button id="login-btn" class="login-btn" onclick="toggleSupabaseAuth()">登录 GitHub</button>
+      <div class="input-fields" id="input-fields">
+        <label>年
+          <input id="in-year" type="number" min="1900" max="2100" value="1991" placeholder="1991">
+        </label>
+        <label>月
+          <input id="in-month" type="number" min="1" max="12" value="9" placeholder="9">
+        </label>
+        <label>日
+          <input id="in-day" type="number" min="1" max="31" value="23" placeholder="23">
+        </label>
+        <label>时
+          <input id="in-hour" type="number" min="0" max="23" value="16" placeholder="16">
+        </label>
+        <label>分
+          <input id="in-minute" type="number" min="0" max="59" value="30" placeholder="30">
+        </label>
+        <label>城市
+          <input id="in-city" list="city-list" value="常州" placeholder="输入城市">
+          <datalist id="city-list"></datalist>
+        </label>
+        <label>性别
+          <select id="in-gender">
+            <option value="0">女（坤造）</option>
+            <option value="1">男（乾造）</option>
+          </select>
+        </label>
+      </div>
+      <div class="input-actions">
+        <button onclick="doPaipanAll()">排盘</button>
+        <button id="save-btn" class="save-btn" onclick="saveChart()" style="display:none">保存命例</button>
+        <button onclick="toggleChartList()">切换命例</button>
+        <span id="login-btn" class="login-btn" onclick="toggleSupabaseAuth()">登录</span>
+      </div>
     </div>
 
     <!-- 命例列表（点击「切换命例」弹出） -->
@@ -111,13 +116,14 @@
   <script src="quiz-bank.js?v=2"></script>
   <script src="iztro.min.js"></script>
   <script src="glossary.js?v=22"></script>
-  <script src="bazi.js?v=33"></script>
+  <script src="bazi.js?v=34"></script>
   <script src="ziwei.js?v=11"></script>
   <script>
     /* 共享排盘：同时排八字和紫微 */
     function doPaipanAll() {
       baziPaipan();
       ziweiPaipan();
+      updateSaveButton(DIRTY);  // 排盘后，若有未保存改动则显示「保存命例」
     }
     /* Tab 切换：只切排盘区，题目和批注一直在 */
     function switchTab(tab) {

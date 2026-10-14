@@ -1166,8 +1166,16 @@ function fillCityList() {
   dl.innerHTML = html;
 }
 
-/* 输入区汇总行（手机版）：把 6 个输入框的内容汇总成一行 */
+/* 输入区：命例名称（第一行）+ 出生数据汇总（第二行）+ 保存按钮显隐 */
+var DIRTY = false;  // 是否有未保存的输入改动
+
 function updateInputSummary() {
+  // 第一行：命例名称（改了输入但未保存时显示「未命名命例」）
+  var nameEl = document.getElementById('input-chart-name');
+  if (nameEl) {
+    nameEl.textContent = (DIRTY || !CURRENT_CHART || !CURRENT_CHART.name) ? '未命名命例' : CURRENT_CHART.name;
+  }
+  // 第二行：出生数据汇总
   var el = document.getElementById('input-summary-text');
   if (!el) return;
   var y = document.getElementById('in-year').value;
@@ -1180,6 +1188,19 @@ function updateInputSummary() {
   var gender = (g === '1') ? '乾造' : '坤造';
   var mm = (mi.length === 1) ? '0' + mi : mi;
   el.textContent = y + '年' + mo + '月' + d + '日 ' + h + ':' + mm + ' · ' + city + ' · ' + gender;
+}
+
+/* 保存按钮显隐：有未保存改动且点过排盘才显示 */
+function updateSaveButton(show) {
+  var btn = document.getElementById('save-btn');
+  if (btn) btn.style.display = show ? '' : 'none';
+}
+
+/* 输入框改动：标记 DIRTY + 隐藏保存按钮（等点排盘才出现） */
+function onInputChange() {
+  DIRTY = true;
+  updateSaveButton(false);
+  updateInputSummary();
 }
 
 /* 手机版：点汇总行展开/折叠输入框 */
@@ -1200,9 +1221,10 @@ window.addEventListener('DOMContentLoaded', function () {
   // 输入区汇总行：绑定输入变化监听 + 初始显示
   ['in-year', 'in-month', 'in-day', 'in-hour', 'in-minute', 'in-city', 'in-gender'].forEach(function (id) {
     var el = document.getElementById(id);
-    if (el) el.addEventListener('input', updateInputSummary);
+    if (el) el.addEventListener('input', onInputChange);
   });
   updateInputSummary();
+  updateSaveButton(false);
 });
 
 /* 点击 dropdown 之外的区域关闭面板 */
@@ -1246,7 +1268,7 @@ async function refreshSupabaseUser() {
 function toggleSupabaseAuth() {
   if (!SUPABASE) { alert('云端组件未加载，请刷新页面重试'); return; }
   if (SUPABASE_USER) {
-    SUPABASE.auth.signOut().then(function () { SUPABASE_USER = null; updateLoginButton(); });
+    // 已登录：点击文字不操作（退出走旁边的 ⎋ icon）
   } else {
     SUPABASE.auth.signInWithOAuth({
       provider: 'github',
@@ -1255,14 +1277,21 @@ function toggleSupabaseAuth() {
   }
 }
 
+function doSignOut() {
+  if (!SUPABASE) return;
+  SUPABASE.auth.signOut().then(function () { SUPABASE_USER = null; updateLoginButton(); });
+}
+
 function updateLoginButton() {
-  var btn = document.getElementById('login-btn');
-  if (!btn) return;
+  var el = document.getElementById('login-btn');
+  if (!el) return;
   if (SUPABASE_USER) {
     var name = (SUPABASE_USER.user_metadata && (SUPABASE_USER.user_metadata.user_name || SUPABASE_USER.user_metadata.preferred_username)) || SUPABASE_USER.email || '';
-    btn.textContent = name ? ('已登录 ' + name) : '已登录';
+    el.classList.add('logged-in');
+    el.innerHTML = '<span class="login-name">已登录 ' + escapeHtml(name) + '</span><span class="login-out" title="退出登录" onclick="event.stopPropagation(); doSignOut()">⎋</span>';
   } else {
-    btn.textContent = '登录 GitHub';
+    el.classList.remove('logged-in');
+    el.textContent = '登录';
   }
 }
 
@@ -1512,6 +1541,10 @@ function saveChart() {
   persistCharts(charts);
   renderChartList();
   syncChartToCloud(chart);  // 自动同步云端
+  DIRTY = false;
+  updateSaveButton(false);
+  CURRENT_CHART = chart;
+  updateInputSummary();
 }
 
 /* 当前载入的命例（供批注复制等使用） */
@@ -1520,6 +1553,8 @@ var CURRENT_CHART = null;
 /* 载入命例 */
 function applyChart(chart) {
   CURRENT_CHART = chart;
+  DIRTY = false;
+  updateSaveButton(false);
   document.getElementById('in-year').value = chart.year;
   document.getElementById('in-month').value = chart.month;
   document.getElementById('in-day').value = chart.day;
