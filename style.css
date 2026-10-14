@@ -50,63 +50,34 @@ body {
   margin: 0 auto 24px;
   background: #fff;
   border-radius: 10px;
-  padding: 20px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  padding: 14px 20px;
   box-shadow: 0 1px 6px rgba(0,0,0,0.05);
 }
-/* 第一行：命例名称 */
+/* 一行：命例名 + 出生数据 + 排盘/保存 | 命例册 + 登录状态 */
+.input-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
 .input-chart-name {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 600;
   color: #1a1a1a;
+  white-space: nowrap;
 }
-/* 第二行：出生数据汇总（点击展开编辑区） */
 .input-summary {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   cursor: pointer;
-  font-size: 18px;
+  font-size: 15px;
   color: #555;
-  line-height: 1.4;
 }
-.input-summary-text { flex: 1; }
-.input-edit-icon { font-size: 18px; color: #0b0060; flex-shrink: 0; }
-/* 编辑区（默认折叠，点汇总行展开） */
-.input-fields {
-  display: none;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: flex-end;
-}
-.input-panel.editing .input-fields { display: flex; }
-.input-panel label {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 14px;
-  color: #777;
-}
-.input-panel input,
-.input-panel select {
-  font-size: 16px;
-  padding: 8px 10px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  min-width: 96px;
-  font-family: inherit;
-}
-/* 第三行：按钮 + 登录状态 */
-.input-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.input-actions button {
-  font-size: 16px;
-  padding: 9px 22px;
+.input-edit-icon { font-size: 16px; color: #0b0060; flex-shrink: 0; }
+.input-main button {
+  font-size: 15px;
+  padding: 8px 18px;
   border: none;
   border-radius: 6px;
   background: #0b0060;
@@ -114,12 +85,18 @@ body {
   cursor: pointer;
   font-family: inherit;
 }
-.input-actions button:hover { background: #1a1490; }
-.input-actions .save-btn { background: #0b7a3e; }
-.input-actions .save-btn:hover { background: #0d8a47; }
-/* 登录状态：放右边，未登录=显著可点击，已登录=淡灰文字+退出icon */
-.login-btn {
+.input-main button:hover { background: #1a1490; }
+.input-main button.save-btn { background: #0b7a3e; }
+.input-main button.save-btn:hover { background: #0d8a47; }
+/* 命例册（推到右边）+ 登录状态 */
+.input-main button.chart-book-btn {
   margin-left: auto;
+  background: #fff;
+  color: #0b0060;
+  border: 1px solid #0b0060;
+}
+.input-main button.chart-book-btn:hover { background: #f0edf8; }
+.login-btn {
   font-size: 15px;
   padding: 8px 18px;
   border: 1px solid #0b0060;
@@ -149,11 +126,36 @@ body {
   border-radius: 4px;
 }
 .login-btn .login-out:hover { color: #c0392b; background: #f0f0f0; }
+/* 编辑区（默认折叠，点汇总行展开） */
+.input-fields {
+  display: none;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  margin-top: 12px;
+}
+.input-panel.editing .input-fields { display: flex; }
+.input-panel label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  color: #777;
+}
+.input-panel input,
+.input-panel select {
+  font-size: 16px;
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  min-width: 96px;
+  font-family: inherit;
+}
 
 /* 手机版：按钮缩放 */
 @media (max-width: 768px) {
-  .input-panel { padding: 14px 16px; gap: 10px; }
-  .input-actions button { font-size: 18px; padding: 8px 16px; }
+  .input-panel { padding: 12px 14px; }
+  .input-main button { font-size: 16px; padding: 7px 14px; }
 }
 
 /* ---------- 排盘面板（白色大卡片：含八字/紫微 Tab + 排盘内容） ---------- */
@@ -562,7 +564,9 @@ img.term {
   gap: 12px;
   padding: 8px 0;
   border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
 }
+.chart-item:hover { background: #faf9f6; }
 .chart-item:last-child { border-bottom: none; }
 .chart-item-name { font-size: 15px; font-weight: 600; min-width: 80px; }
 .chart-item-info { font-size: 13px; color: #888; }

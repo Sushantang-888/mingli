@@ -1166,8 +1166,9 @@ function fillCityList() {
   dl.innerHTML = html;
 }
 
-/* 输入区：命例名称（第一行）+ 出生数据汇总（第二行）+ 保存按钮显隐 */
-var DIRTY = false;  // 是否有未保存的输入改动
+/* 输入区：命例名称 + 出生数据汇总 + 排盘/保存按钮显隐 */
+var DIRTY = false;     // 是否有未保存的输入改动
+var PAIPANED = false;  // 是否点过排盘
 
 function updateInputSummary() {
   // 第一行：命例名称（改了输入但未保存时显示「未命名命例」）
@@ -1190,16 +1191,19 @@ function updateInputSummary() {
   el.textContent = y + '年' + mo + '月' + d + '日 ' + h + ':' + mm + ' · ' + city + ' · ' + gender;
 }
 
-/* 保存按钮显隐：有未保存改动且点过排盘才显示 */
-function updateSaveButton(show) {
-  var btn = document.getElementById('save-btn');
-  if (btn) btn.style.display = show ? '' : 'none';
+/* 按钮显隐：排盘(改了输入框才出现) + 保存(点排盘后才出现) */
+function updateActionButtons() {
+  var paipan = document.getElementById('paipan-btn');
+  var save = document.getElementById('save-btn');
+  if (paipan) paipan.style.display = DIRTY ? '' : 'none';
+  if (save) save.style.display = (DIRTY && PAIPANED) ? '' : 'none';
 }
 
-/* 输入框改动：标记 DIRTY + 隐藏保存按钮（等点排盘才出现） */
+/* 输入框改动：标记 DIRTY + 重置排盘状态（等重新排盘） */
 function onInputChange() {
   DIRTY = true;
-  updateSaveButton(false);
+  PAIPANED = false;
+  updateActionButtons();
   updateInputSummary();
 }
 
@@ -1224,7 +1228,7 @@ window.addEventListener('DOMContentLoaded', function () {
     if (el) el.addEventListener('input', onInputChange);
   });
   updateInputSummary();
-  updateSaveButton(false);
+  updateActionButtons();
 });
 
 /* 点击 dropdown 之外的区域关闭面板 */
@@ -1542,7 +1546,8 @@ function saveChart() {
   renderChartList();
   syncChartToCloud(chart);  // 自动同步云端
   DIRTY = false;
-  updateSaveButton(false);
+  PAIPANED = false;
+  updateActionButtons();
   CURRENT_CHART = chart;
   updateInputSummary();
 }
@@ -1554,7 +1559,8 @@ var CURRENT_CHART = null;
 function applyChart(chart) {
   CURRENT_CHART = chart;
   DIRTY = false;
-  updateSaveButton(false);
+  PAIPANED = false;
+  updateActionButtons();
   document.getElementById('in-year').value = chart.year;
   document.getElementById('in-month').value = chart.month;
   document.getElementById('in-day').value = chart.day;
@@ -2319,16 +2325,15 @@ function renderChartList() {
     var genderText = c.gender === 1 ? '乾造' : '坤造';
     var mm = c.minute < 10 ? '0' + c.minute : c.minute;
     var dateText = c.year + '-' + c.month + '-' + c.day + ' ' + c.hour + ':' + mm;
-    html += '<div class="chart-item">';
+    html += '<div class="chart-item" onclick="applyChartById(' + c.id + ')">';
     html += '<span class="chart-item-name">' + (c.isQuiz ? '<span class="quiz-tag">赛</span>' : '') + c.name + '</span>';
     html += '<span class="chart-item-info">' + genderText + ' · ' + dateText + ' · ' + c.city + '</span>';
     html += '<span class="chart-item-actions">';
-    html += '<button class="chart-edit-btn" title="编辑命例" onclick="editChart(' + c.id + ')">✎</button>';
+    html += '<button class="chart-edit-btn" title="编辑命例" onclick="event.stopPropagation(); editChart(' + c.id + ')">✎</button>';
     if (!c.batchNote || !c.batchNote.length) {
-      html += '<button class="chart-ai-btn"' + (AI_ANALYZING[c.id] ? ' disabled' : '') + ' onclick="aiAnalyzeChart(' + c.id + ')">' + (AI_ANALYZING[c.id] ? '解析中…' : '基础命例解析') + '</button>';
+      html += '<button class="chart-ai-btn"' + (AI_ANALYZING[c.id] ? ' disabled' : '') + ' onclick="event.stopPropagation(); aiAnalyzeChart(' + c.id + ')">' + (AI_ANALYZING[c.id] ? '解析中…' : '基础命例解析') + '</button>';
     }
-    html += '<button onclick="applyChartById(' + c.id + ')">载入</button>';
-    html += '<button onclick="deleteChart(' + c.id + ')">删除</button>';
+    html += '<button onclick="event.stopPropagation(); deleteChart(' + c.id + ')">删除</button>';
     html += '</span>';
     html += '</div>';
   });
