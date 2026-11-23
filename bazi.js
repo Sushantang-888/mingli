@@ -2268,19 +2268,33 @@ function submitEditQuestion(chartId, no) {
   showToast('已更新 Q' + no);
 }
 
-/* 删除某道已录入的题（连带清理该题的答案、我的答案、AI 试解、批注） */
+/* 删除某道已录入的题：删掉后，后续题号自动 -1 顺延，相关答案/批注同步顺延 */
 function deleteQuizQuestion(chartId, no) {
   var chart = quizChartById(chartId);
   if (!chart || !chart.questions) return;
   var q = chart.questions.find(function (x) { return x.no === no; });
   if (!q) return;
-  if (!confirm('确定删除 Q' + no + '「' + (q.topic || '') + '」？\n该题的正确答案、我的答案、AI 试解和批注都会被一起移除。')) return;
+  if (!confirm('确定删除 Q' + no + '「' + (q.topic || '') + '」？\n后面的题号会自动顺延，该题的正确答案、我的答案、AI 试解和批注一并移除。')) return;
+
+  // 1. 删掉该题，后续题号 -1
   chart.questions = chart.questions.filter(function (x) { return x.no !== no; });
-  if (chart.myAnswers) delete chart.myAnswers[no];
-  if (chart.aiAnswers) delete chart.aiAnswers[no];
-  if (chart.quizNotes) delete chart.quizNotes[no];
+  chart.questions.forEach(function (x) { if (x.no > no) x.no = x.no - 1; });
+  chart.questions.sort(function (a, b) { return a.no - b.no; });
+
+  // 2. 我的答案 / AI 试解 / 批注 以题号为 key，一并顺延
+  ['myAnswers', 'aiAnswers', 'quizNotes'].forEach(function (field) {
+    if (!chart[field]) return;
+    var shifted = {};
+    Object.keys(chart[field]).forEach(function (key) {
+      var k = parseInt(key, 10);
+      if (k === no) return;                 // 被删题的直接丢弃
+      shifted[(k > no) ? (k - 1) : k] = chart[field][key];
+    });
+    chart[field] = shifted;
+  });
+
   persistQuizChart(chart);
-  showToast('已删除 Q' + no);
+  showToast('已删除 Q' + no + '，后续题号已顺延');
 }
 
 /* 复制到剪贴板（优先 clipboard API，失败退回 execCommand） */
