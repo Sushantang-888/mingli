@@ -1899,6 +1899,9 @@ function renderQuizQuestions(chart) {
     } else {
       html += '<button class="quiz-add-answer" onclick="openQuizAnswerPicker(' + chart.id + ', ' + q.no + ')">添加正确答案</button>';
     }
+    if (chart.questions && chart.questions.some(function (x) { return x.no === q.no; })) {
+      html += '<button class="quiz-del-q" title="删除这道题" onclick="deleteQuizQuestion(' + chart.id + ', ' + q.no + ')">🗑</button>';
+    }
     html += '</div>';
     html += '</div>';
     q.options.forEach(function (o) {
@@ -2263,6 +2266,21 @@ function submitEditQuestion(chartId, no) {
   persistQuizChart(chart);
   closeModal();
   showToast('已更新 Q' + no);
+}
+
+/* 删除某道已录入的题（连带清理该题的答案、我的答案、AI 试解、批注） */
+function deleteQuizQuestion(chartId, no) {
+  var chart = quizChartById(chartId);
+  if (!chart || !chart.questions) return;
+  var q = chart.questions.find(function (x) { return x.no === no; });
+  if (!q) return;
+  if (!confirm('确定删除 Q' + no + '「' + (q.topic || '') + '」？\n该题的正确答案、我的答案、AI 试解和批注都会被一起移除。')) return;
+  chart.questions = chart.questions.filter(function (x) { return x.no !== no; });
+  if (chart.myAnswers) delete chart.myAnswers[no];
+  if (chart.aiAnswers) delete chart.aiAnswers[no];
+  if (chart.quizNotes) delete chart.quizNotes[no];
+  persistQuizChart(chart);
+  showToast('已删除 Q' + no);
 }
 
 /* 复制到剪贴板（优先 clipboard API，失败退回 execCommand） */
