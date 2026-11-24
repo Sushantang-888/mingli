@@ -20,17 +20,21 @@ function readQuizHeading(line) {
   return { no: Number(numbered[1]), topic: topic };
 }
 
-/* 行首接受 A、A.、A：、(A) 等形式。一行可用明确的选项标签分隔多项。 */
-function readQuizOptionMarkers(line) {
+/* A正文、全角字母和显式标点都可能出现在粘贴文本中。 */
+function readQuizOptionMarkers(line, allowTight) {
   var label = quizLabelText(line);
-  var markers = /(^|[\s;；])(?:[(【[]([A-D])[)】\]]|([A-D])(?:([.、:)\-])|(?=\s|$)))\s*/gi;
+  var markers = /(^|[\s;；])(?:[(【[]([A-D])[)】\]]|([A-D])(?:([.、:)\-])|(?=\s|$)|(?=[\p{Script=Han}\d])))\s*/giu;
   var result = [];
   for (var match of label.matchAll(markers)) {
+    var end = match.index + match[0].length;
+    var tight = !match[2] && !match[4] && /[\p{Script=Han}\d]/u.test(label.charAt(end)) &&
+      /[A-D]$/i.test(match[0]);
+    if (tight && !allowTight) continue;
     result.push({
       letter: (match[2] || match[3]).toUpperCase(),
       explicit: Boolean(match[2] || match[4]),
       start: match.index,
-      end: match.index + match[0].length
+      end: end
     });
   }
   var fullSequence = result.map(function (marker) { return marker.letter; }).join('') === 'ABCD';
@@ -50,6 +54,9 @@ function quizOptionText(text, letter) {
 
 function isCompleteQuizQuestion(topic, options) {
   if (!topic || /\[看不清\]/.test(topic) || options.length !== QUIZ_OPTION_LETTERS.length) return false;
+  if (topic.split(/\r?\n/).slice(1).some(function (line) {
+    return readQuizOptionMarkers(line.trim(), true).some(function (marker) { return marker.start === 0; });
+  })) return false;
   return options.every(function (option) {
     if (!option || /\[看不清\]/.test(option)) return false;
     return !option.split(/\r?\n/).some(function (line, index) {
@@ -121,7 +128,7 @@ function parseQuizText(source) {
       return;
     }
 
-    var markers = readQuizOptionMarkers(line);
+    var markers = readQuizOptionMarkers(line, true);
     if (markers.length) {
       var prefix = line.slice(0, markers[0].start).trim();
       if (prefix) {
@@ -148,7 +155,10 @@ function parseQuizText(source) {
 }
 
 function quizImportDrafts(source, expected) {
-  var questions = parseQuizText(source);
+  return quizDraftsFromQuestions(parseQuizText(source), expected);
+}
+
+function quizDraftsFromQuestions(questions, expected) {
   var count = questions.length;
   if (count > expected) return { questions: questions, overflow: true, detected: count };
   var first = questions[0] && questions[0].no;
@@ -161,4 +171,67 @@ function quizImportDrafts(source, expected) {
   }) : questions.slice();
   while (drafts.length < expected) drafts.push({});
   return { questions: drafts, overflow: false, detected: count };
+}
+
+function countCompleteQuizDrafts(drafts) {
+  return drafts.questions.filter(function (q) {
+    return isCompleteQuizQuestion(q.topic, QUIZ_OPTION_LETTERS.map(function (letter) {
+      return q.options && q.options[letter];
+    }));
+  }).length;
+}
+
+function readRecognizedQuizQuestions(content) {
+  var data = JSON.parse(content);
+  if (!data || !Array.isArray(data.questions)) throw new Error('AI 未返回题目列表');
+  return data.questions.map(function (item) {
+    if (!item || typeof item.topic !== 'string' || !item.options || typeof item.options !== 'object') {
+      throw new Error('AI 返回的题目格式有误');
+    }
+    var options = {};
+    QUIZ_OPTION_LETTERS.forEach(function (letter) {
+      if (typeof item.options[letter] !== 'string') throw new Error('AI 未返回完整的选项字段');
+      options[letter] = item.options[letter].trim();
+    });
+    return {
+      no: Number.isInteger(item.no) && item.no > 0 && item.no <= 999 ? item.no : null,
+      topic: item.topic.trim(),
+      options: options,
+      answer: QUIZ_OPTION_LETTERS.includes(item.answer) ? item.answer : null
+    };
+  });
+}
+
+/* 文本整理只能拆分原文。按出现顺序核对题干和选项，避免改写或串题。 */
+function quizQuestionsMatchSource(questions, source) {
+  function compact(text) { return text.normalize('NFKC').replace(/\s/g, ''); }
+  var original = compact(source);
+  var cursor = 0;
+  function consume(value) {
+    var position = original.indexOf(value, cursor);
+    if (position < 0) return false;
+    cursor = position + value.length;
+    return true;
+  }
+  return questions.every(function (q) {
+    var fieldsMatch = [q.topic].concat(QUIZ_OPTION_LETTERS.map(function (letter) {
+      return q.options[letter];
+    })).every(function (field) {
+      var value = compact(field);
+      return !value || value === '[看不清]' || consume(value);
+    });
+    if (!fieldsMatch || !q.answer) return fieldsMatch;
+    var answer = new RegExp('答案:?' + q.answer).exec(original.slice(cursor));
+    return Boolean(answer && consume(answer[0]));
+  });
+}
+
+function formatRecognizedQuizQuestions(questions) {
+  return questions.map(function (q) {
+    return [
+      (q.no == null ? '' : 'Q' + q.no + ' ') + (q.topic || '[看不清]')
+    ].concat(QUIZ_OPTION_LETTERS.map(function (letter) {
+      return letter + '. ' + (q.options[letter] || '[看不清]');
+    }), q.answer ? ['答案：' + q.answer] : []).join('\n');
+  }).join('\n\n');
 }
