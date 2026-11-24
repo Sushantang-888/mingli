@@ -1794,7 +1794,7 @@ function persistQuizChart(chart) {
 function nextQuizNo(chart) {
   var qs = chart.questions || [];
   var max = 0;
-  qs.forEach(function (q) { if (q.no > max) max = q.no; });
+  qs.forEach(function (q) { max = Math.max(max, Number(q.no) || 0); });
   return max + 1;
 }
 
@@ -1889,17 +1889,16 @@ function renderQuizQuestions(chart) {
     html += '<div class="quiz-q">';
     html += '<div class="quiz-q-body">';
     html += '<div class="quiz-q-head">';
-    html += '<div class="quiz-q-topic">Q' + q.no + ' · ' + annotateYears(q.topic, CURRENT_DATA) + '</div>';
+    html += '<div class="quiz-q-topic">Q' + q.no + ' · ' + annotateYears(escapeHtml(q.topic), CURRENT_DATA) + '</div>';
     // 右侧按钮组：AI 试解 + 我的答案 + 正确答案（添加/编辑）
     html += '<div class="quiz-q-actions">';
     html += '<button class="quiz-ai-solve" data-cid="' + chart.id + '" data-q="' + q.no + '"' + (AI_SOLVING[chart.id + '-' + q.no] ? ' disabled' : '') + ' onclick="aiTrySolve(' + chart.id + ', ' + q.no + ')">' + (AI_SOLVING[chart.id + '-' + q.no] ? ('试解 ' + Math.round(AI_SOLVING[chart.id + '-' + q.no].percent) + '%') : 'AI 试解') + '</button>';
     html += '<button class="quiz-my-answer' + (myAnswer ? ' done' : '') + '" onclick="openMyAnswerPicker(' + chart.id + ', ' + q.no + ')">我的答案' + (myAnswer ? ' ✅' : '') + '</button>';
-    if (q.answer) {
-      html += '<button class="quiz-edit-q" title="编辑题目和正确答案" onclick="openQuizQuestionEditor(' + chart.id + ', ' + q.no + ')">✎</button>';
-    } else {
+    if (!q.answer) {
       html += '<button class="quiz-add-answer" onclick="openQuizAnswerPicker(' + chart.id + ', ' + q.no + ')">添加正确答案</button>';
     }
     if (chart.questions && chart.questions.some(function (x) { return x.no === q.no; })) {
+      html += '<button class="quiz-edit-q" title="编辑题目和正确答案" onclick="openQuizQuestionEditor(' + chart.id + ', ' + q.no + ')">✎</button>';
       html += '<button class="quiz-del-q" title="删除这道题" onclick="deleteQuizQuestion(' + chart.id + ', ' + q.no + ')">🗑</button>';
     }
     html += '</div>';
@@ -1913,7 +1912,7 @@ function renderQuizQuestions(chart) {
       if (correct) marks += ' <span class="quiz-correct-mark">✨</span>';
       if (mine) marks += ' <span class="quiz-my-mark">✅</span>';
       if (ai) marks += ' <span class="quiz-ai-mark">❤️</span>';
-      html += '<div class="quiz-opt' + (correct ? ' correct' : '') + '">' + annotateYears(o, CURRENT_DATA) + marks + '</div>';
+      html += '<div class="quiz-opt' + (correct ? ' correct' : '') + '">' + annotateYears(escapeHtml(o), CURRENT_DATA) + marks + '</div>';
     });
     html += '</div>';
     // AI 试解结果卡片（批注框上方）
@@ -2018,190 +2017,215 @@ function closeModal() {
   document.querySelectorAll('.modal-overlay').forEach(function (m) { m.remove(); });
 }
 
-/* 选项规范化：自动补字母前缀（用户填「大学」或「A.大学」都行） */
-function normalizeOption(v, letter) {
-  v = (v || '').trim();
-  if (!v) return '';
-  if (/^[A-D][.、\s]/.test(v)) return v;
-  return letter + '. ' + v;
-}
+/* 两种来源共用预览，题目完整并确认后一次保存。 */
+function openQuizTextImport() { openQuizImport(false); }
+function openQuizImageImport() { openQuizImport(true); }
 
-/* 把大赛题目文本解析成题目数组（题号+题干+选项，答案留空）
- * 支持格式：数字题号开头（1 / 1. / 1、/ 1））+ A/B/C/D 选项 */
-function parseQuizText(text) {
-  if (!text) return [];
-  var lines = String(text).split(/\r?\n/);
-  var questions = [];
-  var cur = null;
-  lines.forEach(function (raw) {
-    var line = raw.trim();
-    if (!line) return;
-    if (/^\d{1,2}[.\s、\)）]/.test(line)) {
-      var no = parseInt(line.match(/^\d{1,2}/)[0], 10);
-      var topic = line.replace(/^\d{1,2}[.\s、\)）]+/, '').trim();
-      if (cur) questions.push(cur);
-      cur = { no: no, topic: topic, options: [], answer: null };
-    } else if (cur && /^[A-D][.\s、\)）]/.test(line)) {
-      cur.options.push(line);
-    } else if (cur && cur.options.length === 0) {
-      cur.topic += line;
-    }
-  });
-  if (cur) questions.push(cur);
-  return questions;
-}
-
-/* 解析并批量录入 */
-function submitTextParse() {
-  var chart = quizChartById(QUIZ_EDIT_CHART_ID);
-  if (!chart) { closeModal(); return; }
-  var text = document.getElementById('raw-text').value.trim();
-  if (!text) { alert('请先粘贴题目文本'); return; }
-  var qs = parseQuizText(text);
-  if (!qs.length) { alert('没解析出题目，请检查格式（数字题号开头 + A/B/C/D 选项）'); return; }
-  var baseNo = 0;
-  (chart.questions || []).forEach(function (q) { if (q.no > baseNo) baseNo = q.no; });
-  qs.forEach(function (q, i) {
-    upsertQuizQuestion(chart.id, { no: baseNo + i + 1, topic: q.topic, options: q.options, answer: null });
-  });
-  closeModal();
-  showToast('已解析录入 ' + qs.length + ' 道题');
-}
-
-/* 文字录入题目：粘贴整段原文 → 解析并录入；下面保留手动录入兜底 */
-function openQuizTextImport() {
+function openQuizImport(fromImage) {
   var chart = CURRENT_CHART;
   if (!chart || !chart.isQuiz) return;
-  QUIZ_EDIT_CHART_ID = chart.id;
-  var no = nextQuizNo(quizChartById(chart.id));
-  openModal(
-    '<div class="modal-title">📝 文字录入题目</div>' +
-    '<div class="modal-sub">把一组题的原文整段粘贴进来（数字题号 + A/B/C/D 选项），点「解析并录入」自动拆成题目，答案先留空之后补</div>' +
-    '<textarea class="modal-textarea" id="raw-text" placeholder="例如：\n1 下列哪一個描述…\nA …\nB …\nC …\nD …\n2 …">' + escapeHtml(chart.rawText || '') + '</textarea>' +
+  var chartId = chart.id;
+  var currentCount = getQuizQuestions(chart).questions.length;
+  var overlay = openModal(
+    '<div class="modal-title">' + (fromImage ? '🖼 图片录入题目' : '📝 文字录入题目') + '</div>' +
+    (fromImage ? '<label class="modal-label" for="quiz-source-image">题目截图</label>' +
+      '<input id="quiz-source-image" type="file" accept="image/*" class="modal-input">' +
+      '<div id="quiz-img-preview"></div>' +
+      '<button class="modal-btn" id="quiz-recognize" type="button" disabled>识别截图</button>' +
+      '<p class="modal-sub" id="quiz-image-status" role="status"></p>' : '') +
+    '<label class="modal-label" for="quiz-expected">本次要录入几道题？</label>' +
+    '<input id="quiz-expected" class="modal-input" type="number" min="1" max="100" step="1" required value="' + Math.max(1, 5 - currentCount) + '">' +
+    '<label class="modal-label" for="raw-text">' + (fromImage ? '识别后的文字（可更正）' : '题目原文') + '</label>' +
+    '<textarea class="modal-textarea" id="raw-text" placeholder="例如：\nQ1 题干\nA. 选项一\nB. 选项二\nC. 选项三\nD. 选项四">' +
+      escapeHtml(fromImage ? '' : chart.rawText || '') + '</textarea>' +
     '<div class="modal-actions">' +
-    '<button class="modal-btn" onclick="closeModal()">取消</button>' +
-    '<button class="modal-btn primary" onclick="submitTextParse()">解析并录入</button>' +
+    '<button class="modal-btn" type="button" onclick="closeModal()">取消</button>' +
+    '<button class="modal-btn" type="button" id="quiz-manual-btn">手动填题</button>' +
+    '<button class="modal-btn primary" type="button" id="quiz-preview-btn">预览题目</button>' +
     '</div>' +
-    '<div class="modal-divider"></div>' +
-    '<div class="modal-sub">或手动录入第 ' + no + ' 道题</div>' +
-    '<label class="modal-label">题干</label>' +
-    '<input class="modal-input" id="mq-topic" placeholder="如：学历性格">' +
-    '<label class="modal-label">选项 A</label><input class="modal-input" id="mq-a" placeholder="A.…">' +
-    '<label class="modal-label">选项 B</label><input class="modal-input" id="mq-b" placeholder="B.…">' +
-    '<label class="modal-label">选项 C</label><input class="modal-input" id="mq-c" placeholder="C.…">' +
-    '<label class="modal-label">选项 D</label><input class="modal-input" id="mq-d" placeholder="D.…">' +
-    '<label class="modal-label">正确答案（可先留空，之后补）</label>' +
-    '<select class="modal-input" id="mq-answer"><option value="">（暂不填）</option><option>A</option><option>B</option><option>C</option><option>D</option></select>' +
-    '<div class="modal-actions">' +
-    '<button class="modal-btn primary" onclick="submitManualQuestion()">保存这道题</button>' +
-    '</div>'
+    '<div id="quiz-import-result"></div>'
   );
-  var ta = document.getElementById('raw-text');
-  if (ta) ta.addEventListener('input', function () {
+  var source = overlay.querySelector('#raw-text');
+  var expected = overlay.querySelector('#quiz-expected');
+  var result = overlay.querySelector('#quiz-import-result');
+
+  function showPreview() {
+    if (!expected.reportValidity()) return;
+    if (!source.value.trim()) { alert('请先提供题目原文'); return; }
+    var drafts = quizImportDrafts(source.value, expected.valueAsNumber);
+    renderQuizImportPreview(result, drafts, expected.valueAsNumber, chartId);
+  }
+
+  source.addEventListener('input', function () {
+    result.replaceChildren();
+    if (fromImage) return;
     var charts = loadCharts();
-    var c = charts.find(function (x) { return x.id === QUIZ_EDIT_CHART_ID; });
-    if (c) { c.rawText = ta.value; persistCharts(charts); }
+    var target = charts.find(function (c) { return c.id === chartId; });
+    if (target) { target.rawText = source.value; persistCharts(charts); }
+  });
+  expected.addEventListener('input', function () { result.replaceChildren(); });
+  overlay.querySelector('#quiz-manual-btn').addEventListener('click', function () {
+    if (expected.reportValidity()) {
+      renderQuizImportPreview(result, quizImportDrafts('', expected.valueAsNumber), expected.valueAsNumber, chartId);
+    }
+  });
+  overlay.querySelector('#quiz-preview-btn').addEventListener('click', showPreview);
+  if (fromImage) bindQuizImageImport(overlay, source, result, showPreview);
+}
+
+function renderQuizImportPreview(result, drafts, expected, chartId) {
+  var questions = drafts.questions;
+  var warning = drafts.overflow
+    ? '识别到 ' + questions.length + ' 组题目，超过预期的 ' + expected + ' 道。请对照原文修正分题或更改题数，再预览。'
+    : (drafts.detected > 0 && drafts.detected < expected
+      ? '识别到 ' + drafts.detected + ' / ' + expected + ' 道题，缺少的位置已留空。'
+      : '') + '请核对题干和 A–D。缺项可以在这里补齐，保存后按下列顺序编号。';
+  result.innerHTML =
+    '<div class="modal-divider"></div>' +
+    '<div class="modal-sub" role="status">' + warning + '</div>' +
+    '<form>' +
+    questions.map(function (q, i) {
+      var prefix = 'quiz-draft-' + i;
+      var options = q.options || {};
+      return '<fieldset class="quiz-draft"><legend>第 ' + (i + 1) + ' 道' +
+        (q.no != null ? ' · 原题号 ' + q.no : '') +
+        (!isCompleteQuizQuestion(q.topic, QUIZ_OPTION_LETTERS.map(function (letter) { return options[letter]; })) ? ' · 待补' : '') + '</legend>' +
+        '<label class="modal-label" for="' + prefix + '-topic">题干</label>' +
+        '<textarea class="modal-input" id="' + prefix + '-topic" name="topic" rows="2" required>' + escapeHtml(q.topic || '') + '</textarea>' +
+        QUIZ_OPTION_LETTERS.map(function (letter) {
+          return '<label class="modal-label" for="' + prefix + '-' + letter + '">选项 ' + letter + '</label>' +
+            '<textarea class="modal-input" id="' + prefix + '-' + letter + '" name="' + letter + '" rows="2" required>' + escapeHtml(options[letter] || '') + '</textarea>';
+        }).join('') +
+        '<label class="modal-label" for="' + prefix + '-answer">正确答案（可留空）</label>' +
+        '<select class="modal-input" id="' + prefix + '-answer" name="answer"><option value="">（暂不填）</option>' +
+        QUIZ_OPTION_LETTERS.map(function (letter) {
+          return '<option' + (q.answer === letter ? ' selected' : '') + '>' + letter + '</option>';
+        }).join('') +
+        '</select></fieldset>';
+    }).join('') +
+    '<div class="modal-actions"><button class="modal-btn primary" type="submit"' + (drafts.overflow ? ' disabled' : '') +
+    '>确认录入 ' + (drafts.overflow ? expected : questions.length) + ' 道题</button></div></form>';
+
+  result.querySelector('form').addEventListener('submit', function (event) {
+    event.preventDefault();
+    if (drafts.overflow) return;
+    saveQuizImport(chartId, event.currentTarget);
   });
 }
 
-function submitManualQuestion() {
-  var chart = quizChartById(QUIZ_EDIT_CHART_ID);
-  if (!chart) { closeModal(); return; }
-  var topic = document.getElementById('mq-topic').value.trim();
-  var letters = ['A', 'B', 'C', 'D'];
-  var options = [];
-  letters.forEach(function (L) {
-    var v = normalizeOption(document.getElementById('mq-' + L.toLowerCase()).value, L);
-    if (v) options.push(v);
+function saveQuizImport(chartId, form) {
+  var chart = quizChartById(chartId);
+  if (!chart || !chart.isQuiz) { alert('找不到要录入的命例'); return; }
+  var fields = Array.from(form.querySelectorAll('fieldset'));
+  var draft = fields.map(function (question) {
+    return {
+      topic: question.querySelector('[name="topic"]').value.trim(),
+      options: QUIZ_OPTION_LETTERS.map(function (letter) {
+        return question.querySelector('[name="' + letter + '"]').value.trim();
+      }),
+      answer: question.querySelector('[name="answer"]').value || null
+    };
   });
-  if (!topic) { alert('请填题干'); return; }
-  if (options.length < 2) { alert('至少填两个选项'); return; }
-  var answer = document.getElementById('mq-answer').value || null;
+  var invalid = draft.findIndex(function (q) { return !isCompleteQuizQuestion(q.topic, q.options); });
+  if (invalid >= 0) { alert('请核对第 ' + (invalid + 1) + ' 道题，填全题干及 A–D，每格只放一个选项。'); return; }
+
   var no = nextQuizNo(chart);
-  upsertQuizQuestion(chart.id, { no: no, topic: topic, options: options, answer: answer });
+  var questions = draft.map(function (q, i) {
+    return {
+      no: no + i,
+      topic: q.topic,
+      options: q.options.map(function (option, j) { return QUIZ_OPTION_LETTERS[j] + '. ' + option; }),
+      answer: q.answer
+    };
+  });
+  chart.questions = (chart.questions || []).concat(questions);
+  persistQuizChart(chart);
   closeModal();
-  showToast('已保存 Q' + no);
+  showToast('已录入 ' + questions.length + ' 道题');
 }
 
 /* ============ DeepSeek 代理（key 存 Supabase 服务器，前端不接触） ============ */
 var DEEPSEEK_PROXY = 'https://yzgjgprsvcduddqbwmdh.supabase.co/functions/v1/deepseek';
-var QUIZ_IMAGE_DATA = null;  // 当前上传的图片 base64
 
-/* 图片录入题目：上传截图 → DeepSeek 识别 → 录入 */
-function openQuizImageImport() {
-  var chart = CURRENT_CHART;
-  if (!chart || !chart.isQuiz) return;
-  QUIZ_EDIT_CHART_ID = chart.id;
-  QUIZ_IMAGE_DATA = null;
-  openModal(
-    '<div class="modal-title">🖼 图片录入题目</div>' +
-    '<div class="modal-sub">上传大赛题目截图，点「解析」自动识别成题目</div>' +
-    '<input type="file" accept="image/*" class="modal-input" onchange="previewQuizImage(this)">' +
-    '<div id="quiz-img-preview"></div>' +
-    '<div class="modal-actions">' +
-    '<button class="modal-btn" onclick="closeModal()">取消</button>' +
-    '<button class="modal-btn primary" id="quiz-parse-btn" onclick="parseQuizImage()">解析</button>' +
-    '</div>'
-  );
+/* 图片仅做原文转写，拆题、校验和保存走同一个录入入口。 */
+function bindQuizImageImport(overlay, source, result, showPreview) {
+  var input = overlay.querySelector('#quiz-source-image');
+  var preview = overlay.querySelector('#quiz-img-preview');
+  var button = overlay.querySelector('#quiz-recognize');
+  var status = overlay.querySelector('#quiz-image-status');
+  var image = '';
+  var imageVersion = 0;
+
+  input.addEventListener('change', function () {
+    var version = ++imageVersion;
+    var file = input.files && input.files[0];
+    image = '';
+    button.disabled = true;
+    preview.replaceChildren();
+    result.replaceChildren();
+    source.value = '';
+    status.textContent = '';
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onerror = function () {
+      if (version === imageVersion) status.textContent = '图片读取失败，请重新选择。';
+    };
+    reader.onload = function () {
+      if (version !== imageVersion || !overlay.isConnected) return;
+      image = reader.result;
+      var thumbnail = document.createElement('img');
+      thumbnail.src = image;
+      thumbnail.alt = '待识别题目截图';
+      thumbnail.style.maxWidth = '100%';
+      preview.replaceChildren(thumbnail);
+      button.disabled = false;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  button.addEventListener('click', async function () {
+    if (!image || button.disabled) return;
+    var version = imageVersion;
+    button.disabled = true;
+    status.textContent = '正在识别截图…';
+    try {
+      var resultText = await recognizeQuizImage(image);
+      if (version !== imageVersion || !overlay.isConnected) return;
+      source.value = resultText.text;
+      status.textContent = resultText.truncated ? '识别结果被截断，请补齐后再录入。' : '识别完成，请核对题目预览。';
+      showPreview();
+    } catch (error) {
+      if (version === imageVersion) status.textContent = '识别失败：' + error.message;
+    } finally {
+      if (version === imageVersion) button.disabled = false;
+    }
+  });
 }
-function previewQuizImage(input) {
-  var f = input.files && input.files[0];
-  var p = document.getElementById('quiz-img-preview');
-  if (!p || !f) return;
-  var reader = new FileReader();
-  reader.onload = function (e) {
-    QUIZ_IMAGE_DATA = e.target.result;
-    p.innerHTML = '<img src="' + e.target.result + '" style="max-width:100%;border-radius:6px;margin-top:10px;">';
-  };
-  reader.readAsDataURL(f);
-}
-function parseQuizImage() {
-  if (!QUIZ_IMAGE_DATA) { alert('请先上传图片'); return; }
-  var btn = document.getElementById('quiz-parse-btn');
-  if (btn) { btn.disabled = true; btn.textContent = '解析中…'; }
 
-  var prompt = '识别图片中的所有题目。每道题包含：题干 + A/B/C/D 四个选项。输出 JSON 数组：\n[{"no":1,"topic":"题干","options":["A选项","B选项","C选项","D选项"],"answer":null}]\n若图片标注了正确答案则填 answer 为 A/B/C/D，否则为 null。只输出 JSON，不要其他文字。';
-
-  fetch(DEEPSEEK_PROXY, {
+async function recognizeQuizImage(image) {
+  var prompt = '逐行转写截图里所有大赛题目的原文，按图片顺序从头到尾检查，包括最后一题。只输出纯文字，保留繁简字、不改写、不解答。' +
+    '每个题干独占一行，开头写 Q 加图片原题号（题号不清楚时保留题干，不猜号码）。每个选项单独一行，开头分别用 A.、B.、C.、D.。' +
+    '四个选项结束后另起一题，不要跨题合并。看不清的地方用 [看不清]，也保留独立的一行。' +
+    '只有图片明确标注正确答案时才加一行 答案：A（字母按原图）。忽略页眉、广告和命盘，只转写题目。';
+  var response = await fetch(DEEPSEEK_PROXY, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'deepseek-flash',
-      messages: [
-        { role: 'user', content: [
-          { type: 'text', text: prompt },
-          { type: 'image_url', image_url: { url: QUIZ_IMAGE_DATA } }
-        ]}
-      ]
+      messages: [{ role: 'user', content: [
+        { type: 'text', text: prompt },
+        { type: 'image_url', image_url: { url: image } }
+      ] }]
     })
-  })
-  .then(function (r) {
-    if (!r.ok) return r.text().then(function (t) { throw new Error('HTTP ' + r.status + '：' + t.slice(0, 200)); });
-    return r.json();
-  })
-  .then(function (data) {
-    var content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-    if (!content) throw new Error('返回为空');
-    var m = content.match(/\[[\s\S]*\]/);
-    var qs = JSON.parse(m ? m[0] : content);
-    if (!Array.isArray(qs)) throw new Error('返回不是题目数组');
-    var chart = quizChartById(QUIZ_EDIT_CHART_ID);
-    if (!chart) return;
-    var baseNo = 0;
-    (chart.questions || []).forEach(function (q) { if (q.no > baseNo) baseNo = q.no; });
-    qs.forEach(function (q, i) {
-      upsertQuizQuestion(chart.id, { no: baseNo + i + 1, topic: q.topic, options: q.options, answer: q.answer || null });
-    });
-    closeModal();
-    showToast('已识别录入 ' + qs.length + ' 道题');
-  })
-  .catch(function (err) {
-    alert('解析失败：' + err.message);
-  })
-  .finally(function () {
-    if (btn) { btn.disabled = false; btn.textContent = '解析'; }
   });
+  if (!response.ok) throw new Error('图片识别服务返回 HTTP ' + response.status);
+  var body = await response.json();
+  var choice = body.choices && body.choices[0];
+  var content = choice && choice.message && choice.message.content;
+  if (typeof content !== 'string' || !content.trim()) throw new Error('没有识别到题目文字');
+  return { text: content.trim(), truncated: choice.finish_reason === 'length' };
 }
+
 
 /* 添加正确答案：点选一个选项 */
 function openQuizAnswerPicker(chartId, no) {
@@ -2227,16 +2251,21 @@ function openQuizQuestionEditor(chartId, no) {
   if (!chart || !chart.questions) return;
   var q = chart.questions.find(function (x) { return x.no === no; });
   if (!q) return;
-  var letters = ['A', 'B', 'C', 'D'];
-  var optInputs = letters.map(function (L) {
-    var val = q.options.filter(function (o) { return o.charAt(0) === L; })[0] || '';
-    return '<label class="modal-label">选项 ' + L + '</label><input class="modal-input" id="eq-' + L.toLowerCase() + '" value="' + escapeHtml(val) + '">';
+  var optInputs = QUIZ_OPTION_LETTERS.map(function (letter) {
+    var val = q.options.find(function (o) { return o.charAt(0) === letter; }) || '';
+    var id = 'eq-' + letter.toLowerCase();
+    return '<label class="modal-label" for="' + id + '">选项 ' + letter + '</label>' +
+      '<textarea class="modal-input" rows="2" id="' + id + '">' + escapeHtml(quizOptionText(val, letter)) + '</textarea>';
   }).join('');
+  var previousOptions = q.options.length !== 4
+    ? '<details open><summary>旧题有 ' + q.options.length + ' 个选项，请对照原题核对下方 A–D</summary><pre class="quiz-original-options">' + escapeHtml(q.options.join('\n')) + '</pre></details>'
+    : '';
   var ansOptions = '<option value=""' + (!q.answer ? ' selected' : '') + '>（暂不填）</option>' +
-    letters.map(function (L) { return '<option' + (q.answer === L ? ' selected' : '') + '>' + L + '</option>'; }).join('');
+    QUIZ_OPTION_LETTERS.map(function (letter) { return '<option' + (q.answer === letter ? ' selected' : '') + '>' + letter + '</option>'; }).join('');
   openModal(
     '<div class="modal-title">编辑 Q' + no + '</div>' +
-    '<label class="modal-label">题干</label><input class="modal-input" id="eq-topic" value="' + escapeHtml(q.topic) + '">' +
+    previousOptions +
+    '<label class="modal-label" for="eq-topic">题干</label><textarea class="modal-input" rows="2" id="eq-topic">' + escapeHtml(q.topic) + '</textarea>' +
     optInputs +
     '<label class="modal-label">正确答案</label><select class="modal-input" id="eq-answer">' + ansOptions + '</select>' +
     '<div class="modal-actions">' +
@@ -2251,17 +2280,13 @@ function submitEditQuestion(chartId, no) {
   var q = chart.questions.find(function (x) { return x.no === no; });
   if (!q) { closeModal(); return; }
   var topic = document.getElementById('eq-topic').value.trim();
-  var letters = ['A', 'B', 'C', 'D'];
-  var options = [];
-  letters.forEach(function (L) {
-    var v = normalizeOption(document.getElementById('eq-' + L.toLowerCase()).value, L);
-    if (v) options.push(v);
+  var options = QUIZ_OPTION_LETTERS.map(function (letter) {
+    return document.getElementById('eq-' + letter.toLowerCase()).value.trim();
   });
-  if (!topic) { alert('请填题干'); return; }
-  if (options.length < 2) { alert('至少保留两个选项'); return; }
+  if (!isCompleteQuizQuestion(topic, options)) { alert('请填全题干及 A–D，每格只放一个选项。'); return; }
   var answer = document.getElementById('eq-answer').value || null;
   q.topic = topic;
-  q.options = options;
+  q.options = options.map(function (option, i) { return QUIZ_OPTION_LETTERS[i] + '. ' + option; });
   q.answer = answer;
   persistQuizChart(chart);
   closeModal();

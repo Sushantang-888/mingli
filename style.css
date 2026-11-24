@@ -985,6 +985,16 @@ img.term {
 .modal-input:focus, .modal-textarea:focus { outline: none; border-color: #0b0060; }
 .modal-textarea { min-height: 140px; resize: vertical; line-height: 1.6; }
 .modal-divider { height: 1px; background: #eee; margin: 18px 0; }
+.quiz-draft {
+  min-width: 0;
+  margin: 16px 0;
+  padding: 8px 12px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+.quiz-draft legend { padding: 0 5px; font-weight: 600; }
+.quiz-draft textarea, .quiz-original-options { white-space: pre-wrap; overflow-wrap: anywhere; }
+.modal-btn:disabled { opacity: 0.55; cursor: default; }
 .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
 .modal-btn {
   font-size: 14px;
